@@ -1,0 +1,76 @@
+import type { Project, Etablissement } from "./types";
+
+// Mock data for frontend-only demo
+export const MOCK_PROJECTS: Project[] = [
+  {
+    id: "p1",
+    name: "PE CHU Bordeaux 2025-2030",
+    type: "PE",
+    entity_type: "etablissement",
+    finess: "330781196",
+    department: "33",
+    region: "Nouvelle-Aquitaine",
+    modules: ["diagnostic_territorial", "diagnostic_financier", "diagnostic_offre_soins", "analyse_axes_strategiques"],
+    is_exploration: false,
+    status: "in_progress",
+    created_at: "2026-01-15T10:30:00Z",
+    updated_at: "2026-02-20T14:45:00Z",
+  },
+  {
+    id: "p2",
+    name: "PM Centre Hospitalier de Pau",
+    type: "PM",
+    entity_type: "etablissement",
+    finess: "640781290",
+    department: "64",
+    region: "Nouvelle-Aquitaine",
+    modules: ["diagnostic_offre_soins", "fiches_actions_gantt"],
+    is_exploration: false,
+    status: "draft",
+    created_at: "2026-02-10T09:00:00Z",
+    updated_at: "2026-02-10T09:00:00Z",
+  },
+  {
+    id: "p3",
+    name: "PMS GHT Gironde",
+    type: "PMS",
+    entity_type: "ght",
+    department: "33",
+    region: "Nouvelle-Aquitaine",
+    modules: ["fusion_regroupement", "recherche_documentaire"],
+    is_exploration: false,
+    status: "completed",
+    created_at: "2025-11-01T08:00:00Z",
+    updated_at: "2026-01-30T16:20:00Z",
+  },
+];
+
+export const MOCK_ETABLISSEMENTS: Etablissement[] = [
+  { finess_geo: "330781196", nom: "CHU de Bordeaux", commune: "Bordeaux", departement: "33", region: "Nouvelle-Aquitaine", type_etab: "CHR/U", statut_juridique: "Public" },
+  { finess_geo: "750712184", nom: "AP-HP - Hôpital Pitié-Salpêtrière", commune: "Paris 13e", departement: "75", region: "Île-de-France", type_etab: "CHR/U", statut_juridique: "Public" },
+  { finess_geo: "690781810", nom: "Hospices Civils de Lyon", commune: "Lyon", departement: "69", region: "Auvergne-Rhône-Alpes", type_etab: "CHR/U", statut_juridique: "Public" },
+  { finess_geo: "130786049", nom: "AP-HM - Hôpital de la Timone", commune: "Marseille", departement: "13", region: "Provence-Alpes-Côte d'Azur", type_etab: "CHR/U", statut_juridique: "Public" },
+  { finess_geo: "310781406", nom: "CHU de Toulouse", commune: "Toulouse", departement: "31", region: "Occitanie", type_etab: "CHR/U", statut_juridique: "Public" },
+  { finess_geo: "440000289", nom: "CHU de Nantes", commune: "Nantes", departement: "44", region: "Pays de la Loire", type_etab: "CHR/U", statut_juridique: "Public" },
+  { finess_geo: "350005179", nom: "CHU de Rennes", commune: "Rennes", departement: "35", region: "Bretagne", type_etab: "CHR/U", statut_juridique: "Public" },
+  { finess_geo: "670780055", nom: "Hôpitaux Universitaires de Strasbourg", commune: "Strasbourg", departement: "67", region: "Grand Est", type_etab: "CHR/U", statut_juridique: "Public" },
+  { finess_geo: "640781290", nom: "Centre Hospitalier de Pau", commune: "Pau", departement: "64", region: "Nouvelle-Aquitaine", type_etab: "CH", statut_juridique: "Public" },
+  { finess_geo: "590780193", nom: "CHU de Lille", commune: "Lille", departement: "59", region: "Hauts-de-France", type_etab: "CHR/U", statut_juridique: "Public" },
+];
+
+export const MOCK_IDENTITY_CARD = {
+  finess_geo: "330781196",
+  finess_juridique: "330781188",
+  nom: "CHU de Bordeaux",
+  commune: "Bordeaux",
+  departement: "Gironde (33)",
+  region: "Nouvelle-Aquitaine",
+  ght: "GHT Alliance de Gironde",
+  statut_juridique: "Établissement public de santé",
+  nb_lits: 3042,
+  nb_places: 487,
+  nb_urgences: 98500,
+  effectifs_med: 2850,
+  certification_niveau: "B",
+  certification_date: "2019-06-15",
+};
