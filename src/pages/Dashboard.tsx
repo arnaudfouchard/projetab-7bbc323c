@@ -24,7 +24,7 @@ const actions = [
 },
 {
   title: "Explorer la base",
-  description: "Rechercher dans les documents, entretiens et diagnostics",
+  description: "rechercher dans les documents, entretiens et diagnostics",
   icon: FolderOpen,
   href: "/projects/select-entity?mode=exploration",
   accent: false
