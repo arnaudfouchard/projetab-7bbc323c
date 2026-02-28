@@ -74,15 +74,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Quick links */}
-      <div className="mb-12 flex flex-wrap gap-3">
-        <Button variant="outline" size="sm" onClick={() => navigate("/data-sources")}>
-          <Database className="mr-1 h-4 w-4" /> Données en base
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => navigate("/admin/users")}>
-          <ShieldCheck className="mr-1 h-4 w-4" /> Gestion utilisateurs
-        </Button>
-      </div>
 
       {/* Existing projects */}
       <div className="animate-fade-in" style={{ animationDelay: "200ms" }}>
