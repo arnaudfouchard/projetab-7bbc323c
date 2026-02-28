@@ -8,28 +8,28 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 const actions = [
-  {
-    title: "Nouveau projet",
-    description: "Créer un projet d'établissement avec entité et modules",
-    icon: Plus,
-    href: "/projects/select-entity?mode=project",
-    accent: true,
-  },
-  {
-    title: "Mode exploration",
-    description: "Explorer un module sans sauvegarder de projet",
-    icon: Compass,
-    href: "/projects/select-entity?mode=exploration",
-    accent: false,
-  },
-  {
-    title: "Explorer la base",
-    description: "Rechercher dans les documents, entretiens et diagnostics",
-    icon: FolderOpen,
-    href: "/projects/select-entity?mode=exploration",
-    accent: false,
-  },
-];
+{
+  title: "Nouveau projet",
+  description: "Créer un projet d'établissement avec entité et modules",
+  icon: Plus,
+  href: "/projects/select-entity?mode=project",
+  accent: true
+},
+{
+  title: "Mode exploration",
+  description: "Explorer un module sans sauvegarder de projet",
+  icon: Compass,
+  href: "/projects/select-entity?mode=exploration",
+  accent: false
+},
+{
+  title: "Explorer la base",
+  description: "Rechercher dans les documents, entretiens et diagnostics",
+  icon: FolderOpen,
+  href: "/projects/select-entity?mode=exploration",
+  accent: false
+}];
+
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -41,28 +41,28 @@ export default function Dashboard() {
         <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
           Tableau de bord
         </h1>
-        <p className="mt-2 text-muted-foreground">
-          Automatisez la production de vos projets médicaux d'établissement
+        <p className="mt-2 text-muted-foreground">Automatisez la production de vos projets
+
         </p>
       </div>
 
       {/* Action cards */}
       <div className="mb-12 grid gap-4 sm:grid-cols-3">
-        {actions.map((a, i) => (
-          <Card
-            key={a.title}
-            className={`card-hover cursor-pointer ${
-              a.accent ? "border-accent/40 bg-accent/5" : ""
-            }`}
-            style={{ animationDelay: `${i * 80}ms` }}
-            onClick={() => navigate(a.href)}
-          >
+        {actions.map((a, i) =>
+        <Card
+          key={a.title}
+          className={`card-hover cursor-pointer ${
+          a.accent ? "border-accent/40 bg-accent/5" : ""}`
+          }
+          style={{ animationDelay: `${i * 80}ms` }}
+          onClick={() => navigate(a.href)}>
+
             <CardContent className="flex flex-col gap-3 p-6">
               <div
-                className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                  a.accent ? "gold-gradient text-accent-foreground" : "bg-secondary"
-                }`}
-              >
+              className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+              a.accent ? "gold-gradient text-accent-foreground" : "bg-secondary"}`
+              }>
+
                 <a.icon className="h-5 w-5" />
               </div>
               <div>
@@ -71,7 +71,7 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
-        ))}
+        )}
       </div>
 
       {/* Quick links */}
@@ -93,29 +93,29 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        {MOCK_PROJECTS.length === 0 ? (
-          <Card className="border-dashed">
+        {MOCK_PROJECTS.length === 0 ?
+        <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
               <FolderOpen className="mb-3 h-10 w-10 opacity-40" />
               <p>Aucun projet pour le moment</p>
               <Button
-                variant="outline"
-                size="sm"
-                className="mt-4"
-                onClick={() => navigate("/projects/select-entity?mode=project")}
-              >
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => navigate("/projects/select-entity?mode=project")}>
+
                 <Plus className="mr-1 h-4 w-4" /> Créer un projet
               </Button>
             </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {MOCK_PROJECTS.map((project) => (
-              <Card
-                key={project.id}
-                className="card-hover cursor-pointer"
-                onClick={() => navigate(`/projects/${project.id}`)}
-              >
+          </Card> :
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {MOCK_PROJECTS.map((project) =>
+          <Card
+            key={project.id}
+            className="card-hover cursor-pointer"
+            onClick={() => navigate(`/projects/${project.id}`)}>
+
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-base font-semibold leading-tight">
@@ -141,10 +141,10 @@ export default function Dashboard() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+          )}
           </div>
-        )}
+        }
       </div>
-    </div>
-  );
+    </div>);
+
 }
