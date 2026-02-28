@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   MapPin, TrendingUp, Activity, GitMerge, Target,
   CalendarDays, Search, ArrowLeft, Pencil, Trash2,
@@ -21,7 +21,10 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 export default function Workspace() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const project = MOCK_PROJECTS.find((p) => p.id === id) || MOCK_PROJECTS[0];
+  const customName = searchParams.get("projectName");
+  const displayName = customName ? decodeURIComponent(customName) : project.name;
   const identity = MOCK_IDENTITY_CARD;
   const [activeModule, setActiveModule] = useState<ModuleId | null>(null);
 
@@ -36,7 +39,7 @@ export default function Workspace() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
-            <h1 className="font-display text-lg font-bold">{project.name}</h1>
+            <h1 className="font-display text-lg font-bold">{displayName}</h1>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <StatusBadge status={project.status} />
               <span>{project.region}</span>
