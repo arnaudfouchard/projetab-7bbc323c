@@ -79,7 +79,7 @@ export default function SelectModules() {
       )}
 
       <div className="my-8 grid gap-3 sm:grid-cols-2">
-        {MODULES.map((mod, i) => {
+        {[...MODULES, ...(isExploration ? EXPLORATION_ONLY_MODULES : [])].map((mod, i) => {
           const Icon = iconMap[mod.icon] || MapPin;
           const isActive = selectedModules.includes(mod.id);
           return (
