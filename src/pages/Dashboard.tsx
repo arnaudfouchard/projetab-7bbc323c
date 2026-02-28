@@ -19,7 +19,7 @@ const actions = [
   title: "Mode exploration",
   description: "Explorer des données dans un module spécifique sans sauvegarder de projet",
   icon: Compass,
-  href: "/projects/select-entity?mode=exploration",
+  href: "/explore",
   accent: false
 }];
 
