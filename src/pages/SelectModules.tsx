@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { MODULES } from "@/lib/constants";
 import type { ModuleId } from "@/lib/types";
 
@@ -21,7 +23,7 @@ export default function SelectModules() {
   const finess = params.get("finess") || "";
 
   const [selectedModules, setSelectedModules] = useState<ModuleId[]>([]);
-
+  const [projectName, setProjectName] = useState("");
   const isExploration = mode === "exploration";
 
   const toggle = (id: ModuleId) => {
@@ -35,8 +37,9 @@ export default function SelectModules() {
   };
 
   const handleCreate = () => {
-    // In real app, POST to API then navigate to workspace
-    navigate(`/projects/p1`);
+    // In real app, POST to API with projectName then navigate to workspace
+    const encodedName = encodeURIComponent(projectName);
+    navigate(`/projects/p1?projectName=${encodedName}`);
   };
 
   return (
@@ -62,6 +65,18 @@ export default function SelectModules() {
             : "Sélectionnez les modules à inclure (minimum 1)"}
         </p>
       </div>
+
+      {!isExploration && (
+        <div className="mb-6 space-y-2">
+          <Label htmlFor="project-name">Nom du projet</Label>
+          <Input
+            id="project-name"
+            placeholder="Ex : Projet Médical 2026-2030"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+          />
+        </div>
+      )}
 
       <div className="my-8 grid gap-3 sm:grid-cols-2">
         {MODULES.map((mod, i) => {
@@ -99,7 +114,7 @@ export default function SelectModules() {
         <Button variant="outline" onClick={() => navigate(-1)}>
           Retour
         </Button>
-        <Button disabled={selectedModules.length === 0} onClick={handleCreate}>
+        <Button disabled={selectedModules.length === 0 || (!isExploration && !projectName.trim())} onClick={handleCreate}>
           {isExploration ? "Explorer" : "Créer le projet"}
         </Button>
       </div>
