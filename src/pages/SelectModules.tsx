@@ -2,17 +2,17 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   MapPin, TrendingUp, Activity, GitMerge,
-  Target, CalendarDays, Search, ArrowLeft, Check,
+  Target, CalendarDays, Search, ArrowLeft, Check, FolderOpen,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MODULES } from "@/lib/constants";
+import { MODULES, EXPLORATION_ONLY_MODULES } from "@/lib/constants";
 import type { ModuleId } from "@/lib/types";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  MapPin, TrendingUp, Activity, GitMerge, Target, CalendarDays, Search,
+  MapPin, TrendingUp, Activity, GitMerge, Target, CalendarDays, Search, FolderOpen,
 };
 
 export default function SelectModules() {
@@ -79,7 +79,7 @@ export default function SelectModules() {
       )}
 
       <div className="my-8 grid gap-3 sm:grid-cols-2">
-        {MODULES.map((mod, i) => {
+        {[...MODULES, ...(isExploration ? EXPLORATION_ONLY_MODULES : [])].map((mod, i) => {
           const Icon = iconMap[mod.icon] || MapPin;
           const isActive = selectedModules.includes(mod.id);
           return (
