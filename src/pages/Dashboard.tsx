@@ -10,14 +10,14 @@ import { fr } from "date-fns/locale";
 const actions = [
 {
   title: "Nouveau projet",
-  description: "Créer un projet d'établissement avec entité et modules",
+  description: "Créer un projet pour une entité et ouvrir les modules nécessaires",
   icon: Plus,
   href: "/projects/select-entity?mode=project",
   accent: true
 },
 {
   title: "Mode exploration",
-  description: "Explorer un module sans sauvegarder de projet",
+  description: "Explorer des données dans un module spécifique sans sauvegarder de projet",
   icon: Compass,
   href: "/projects/select-entity?mode=exploration",
   accent: false
