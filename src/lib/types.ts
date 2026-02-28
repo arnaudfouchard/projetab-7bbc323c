@@ -9,7 +9,8 @@ export type ModuleId =
   | "fusion_regroupement"
   | "analyse_axes_strategiques"
   | "fiches_actions_gantt"
-  | "recherche_documentaire";
+  | "recherche_documentaire"
+  | "explorer_base";
 
 export interface ModuleDefinition {
   id: ModuleId;

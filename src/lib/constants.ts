@@ -45,6 +45,15 @@ export const MODULES: ModuleDefinition[] = [
   },
 ];
 
+export const EXPLORATION_ONLY_MODULES: ModuleDefinition[] = [
+  {
+    id: "explorer_base",
+    label: "Explorer la base",
+    description: "Rechercher dans les documents, entretiens et diagnostics",
+    icon: "FolderOpen",
+  },
+];
+
 export const ENTITY_TYPES = [
   { value: "etablissement" as const, label: "Établissement", description: "Hôpital, clinique, EHPAD…" },
   { value: "ght" as const, label: "GHT", description: "Groupement Hospitalier de Territoire" },
