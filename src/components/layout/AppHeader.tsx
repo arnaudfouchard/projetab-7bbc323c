@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Building2, Menu, LogOut, User } from "lucide-react";
+import { Building2, Menu, LogOut, User, Database, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -44,25 +44,33 @@ export function AppHeader() {
           ))}
         </nav>
 
-        {/* User menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-accent text-accent-foreground text-xs">AF</AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem className="gap-2">
-              <User className="h-4 w-4" /> Mon compte
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 text-destructive" onClick={() => navigate("/login")}>
-              <LogOut className="h-4 w-4" /> Déconnexion
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="hidden items-center gap-2 md:flex">
+          <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => navigate("/data-sources")}>
+            <Database className="h-4 w-4" /> Données en base
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-accent text-accent-foreground text-xs">AF</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem className="gap-2">
+                <User className="h-4 w-4" /> Mon compte
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2" onClick={() => navigate("/admin/users")}>
+                <ShieldCheck className="h-4 w-4" /> Gestion utilisateurs
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="gap-2 text-destructive" onClick={() => navigate("/login")}>
+                <LogOut className="h-4 w-4" /> Déconnexion
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         {/* Mobile nav */}
         <Sheet open={open} onOpenChange={setOpen}>
