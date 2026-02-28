@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Compass, FolderOpen, Clock, ArrowRight } from "lucide-react";
+import { Plus, Compass, Clock, ArrowRight, FolderOpen } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -19,13 +19,6 @@ const actions = [
   title: "Mode exploration",
   description: "Explorer des données dans un module spécifique sans sauvegarder de projet",
   icon: Compass,
-  href: "/projects/select-entity?mode=exploration",
-  accent: false
-},
-{
-  title: "Explorer la base",
-  description: "rechercher dans les documents, entretiens et diagnostics",
-  icon: FolderOpen,
   href: "/projects/select-entity?mode=exploration",
   accent: false
 }];
