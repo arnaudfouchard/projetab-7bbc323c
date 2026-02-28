@@ -26,7 +26,7 @@ const actions = [
     title: "Explorer la base",
     description: "Rechercher dans les documents, entretiens et diagnostics",
     icon: FolderOpen,
-    href: "/explore",
+    href: "/projects/select-entity?mode=exploration",
     accent: false,
   },
 ];

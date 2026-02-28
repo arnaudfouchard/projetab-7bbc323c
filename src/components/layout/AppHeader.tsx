@@ -1,16 +1,18 @@
-import { Link, useLocation } from "react-router-dom";
-import { Building2, Menu } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Building2, Menu, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 
 const navItems = [
   { label: "Dashboard", href: "/" },
-  { label: "Explorer", href: "/explore" },
 ];
 
 export function AppHeader() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
   return (
@@ -20,8 +22,8 @@ export function AppHeader() {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
             <Building2 className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="font-display text-xl font-bold tracking-tight text-foreground">
-            Projet<span className="text-accent">Etab</span>
+           <span className="font-display text-xl font-bold tracking-tight text-foreground">
+            Proj<span className="text-accent">Etab</span>
           </span>
         </Link>
 
@@ -41,6 +43,26 @@ export function AppHeader() {
             </Link>
           ))}
         </nav>
+
+        {/* User menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-accent text-accent-foreground text-xs">AF</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem className="gap-2">
+              <User className="h-4 w-4" /> Mon compte
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="gap-2 text-destructive" onClick={() => navigate("/login")}>
+              <LogOut className="h-4 w-4" /> Déconnexion
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Mobile nav */}
         <Sheet open={open} onOpenChange={setOpen}>
