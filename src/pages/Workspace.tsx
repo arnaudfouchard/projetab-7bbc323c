@@ -3,19 +3,38 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   MapPin, TrendingUp, Activity, GitMerge, Target,
   CalendarDays, Search, ArrowLeft, Pencil, Trash2,
-  Building2, Bed, Users, Stethoscope, ShieldCheck, Clock,
+  Building2, Bed, Users, Stethoscope, ShieldCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/StatusBadge";
 import { MODULES } from "@/lib/constants";
 import { MOCK_PROJECTS, MOCK_IDENTITY_CARD } from "@/lib/mock-data";
 import type { ModuleId } from "@/lib/types";
 
+import { ModuleDiagnosticTerritorial } from "@/components/modules/ModuleDiagnosticTerritorial";
+import { ModuleDiagnosticFinancier } from "@/components/modules/ModuleDiagnosticFinancier";
+import { ModuleDiagnosticOffreSoins } from "@/components/modules/ModuleDiagnosticOffreSoins";
+import { ModuleFusionRegroupement } from "@/components/modules/ModuleFusionRegroupement";
+import { ModuleAxesStrategiques } from "@/components/modules/ModuleAxesStrategiques";
+import { ModuleFichesActions } from "@/components/modules/ModuleFichesActions";
+import { ModuleRechercheDocumentaire } from "@/components/modules/ModuleRechercheDocumentaire";
+
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   MapPin, TrendingUp, Activity, GitMerge, Target, CalendarDays, Search,
+};
+
+const moduleComponents: Record<ModuleId, React.ComponentType> = {
+  diagnostic_territorial: ModuleDiagnosticTerritorial,
+  diagnostic_financier: ModuleDiagnosticFinancier,
+  diagnostic_offre_soins: ModuleDiagnosticOffreSoins,
+  fusion_regroupement: ModuleFusionRegroupement,
+  analyse_axes_strategiques: ModuleAxesStrategiques,
+  fiches_actions_gantt: ModuleFichesActions,
+  recherche_documentaire: ModuleRechercheDocumentaire,
+  explorer_base: ModuleRechercheDocumentaire,
 };
 
 export default function Workspace() {
@@ -26,9 +45,9 @@ export default function Workspace() {
   const customName = searchParams.get("projectName");
   const displayName = customName ? decodeURIComponent(customName) : project.name;
   const identity = MOCK_IDENTITY_CARD;
-  const [activeModule, setActiveModule] = useState<ModuleId | null>(null);
 
   const projectModules = MODULES.filter((m) => project.modules.includes(m.id));
+  const defaultTab = projectModules[0]?.id || "diagnostic_territorial";
 
   return (
     <div className="min-h-screen">
@@ -113,7 +132,7 @@ export default function Workspace() {
                 <Separator />
 
                 <div className="flex items-center gap-2 text-xs">
-                  <ShieldCheck className="h-4 w-4 text-success" />
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
                   <div>
                     <p className="font-medium">Certification HAS — {identity.certification_niveau}</p>
                     <p className="text-muted-foreground">{identity.certification_date}</p>
@@ -134,53 +153,34 @@ export default function Workspace() {
             </Card>
           </aside>
 
-          {/* Modules grid */}
-          <main className="flex-1">
-            <h2 className="mb-4 font-display text-lg font-semibold">Modules</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
+          {/* Modules as tabs */}
+          <main className="flex-1 min-w-0">
+            <Tabs defaultValue={defaultTab} className="w-full">
+              <TabsList className="mb-6 flex h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
+                {projectModules.map((mod) => {
+                  const Icon = iconMap[mod.icon] || MapPin;
+                  return (
+                    <TabsTrigger
+                      key={mod.id}
+                      value={mod.id}
+                      className="gap-1.5 rounded-lg border border-transparent px-3 py-2 text-xs font-medium data-[state=active]:border-accent data-[state=active]:bg-accent/10 data-[state=active]:text-accent-foreground data-[state=active]:shadow-none"
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {mod.label}
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+
               {projectModules.map((mod) => {
-                const Icon = iconMap[mod.icon] || MapPin;
-                const isActive = activeModule === mod.id;
+                const ModuleContent = moduleComponents[mod.id];
                 return (
-                  <Card
-                    key={mod.id}
-                    className={`card-hover cursor-pointer ${
-                      isActive ? "border-accent ring-2 ring-accent/20" : ""
-                    }`}
-                    onClick={() => setActiveModule(isActive ? null : mod.id)}
-                  >
-                    <CardContent className="flex items-center gap-3 p-4">
-                      <div
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                          isActive ? "gold-gradient text-accent-foreground" : "bg-secondary"
-                        }`}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold">{mod.label}</p>
-                        <p className="text-xs text-muted-foreground">{mod.description}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <TabsContent key={mod.id} value={mod.id} className="mt-0">
+                    {ModuleContent ? <ModuleContent /> : null}
+                  </TabsContent>
                 );
               })}
-            </div>
-
-            {/* Module content placeholder */}
-            {activeModule && (
-              <Card className="mt-6 animate-fade-in">
-                <CardContent className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-                  <Clock className="mb-3 h-8 w-8 opacity-40" />
-                  <p className="font-medium">
-                    Module « {MODULES.find((m) => m.id === activeModule)?.label} »
-                  </p>
-                  <p className="mt-1 text-sm">
-                    Les données de ce module seront affichées ici une fois le backend connecté.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            </Tabs>
           </main>
         </div>
       </div>
