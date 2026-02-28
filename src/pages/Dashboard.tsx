@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, Compass, FolderOpen, Clock, ArrowRight } from "lucide-react";
+import { Plus, Compass, FolderOpen, Clock, ArrowRight, Database, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -26,7 +26,7 @@ const actions = [
     title: "Explorer la base",
     description: "Rechercher dans les documents, entretiens et diagnostics",
     icon: FolderOpen,
-    href: "/explore",
+    href: "/projects/select-entity?mode=exploration",
     accent: false,
   },
 ];
@@ -72,6 +72,16 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Quick links */}
+      <div className="mb-12 flex flex-wrap gap-3">
+        <Button variant="outline" size="sm" onClick={() => navigate("/data-sources")}>
+          <Database className="mr-1 h-4 w-4" /> Données en base
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => navigate("/admin/users")}>
+          <ShieldCheck className="mr-1 h-4 w-4" /> Gestion utilisateurs
+        </Button>
       </div>
 
       {/* Existing projects */}
