@@ -16,7 +16,7 @@ export const MODULES: ModuleDefinition[] = [
   {
     id: "diagnostic_offre_soins",
     label: "Diagnostic offre de soins",
-    description: "Activité MCO/SSR/PSY, parts de marché",
+    description: "Activité, parts de marché, benchmark, taux d'ambulatoire",
     icon: "Activity",
   },
   {
@@ -28,7 +28,7 @@ export const MODULES: ModuleDefinition[] = [
   {
     id: "analyse_axes_strategiques",
     label: "Analyse axes stratégiques",
-    description: "Benchmark PE/PM existants",
+    description: "Identification des axes stratégiques, benchmark PE/PM existants",
     icon: "Target",
   },
   {
