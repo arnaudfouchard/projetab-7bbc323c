@@ -105,6 +105,12 @@ Deno.serve(async (req) => {
 
       const geo = geoData[finess_geo];
 
+      // Extract commune from ligneacheminement (format: "01440 VIRIAT" → "VIRIAT")
+      const ligneAch = row[15] || "";
+      const communeMatch = ligneAch.match(/^\d{5}\s+(.+)$/);
+      const communeName = communeMatch ? communeMatch[1] : ligneAch;
+      const codePostal = ligneAch.match(/^(\d{5})/)?.[1] || null;
+
       records.push({
         finess_geo,
         finess_juridique: row[2] || null,
@@ -112,12 +118,13 @@ Deno.serve(async (req) => {
         type_etab,
         categorie_code: catCode,
         categorie_libelle: row[19] || null,
-        commune: row[14] || null,      // libcommune or département name
+        commune: communeName || null,
+        code_commune: row[12] || null,    // code commune INSEE
         code_departement: row[13] || null,
-        departement: row[14] || null,
+        departement: row[14] || null,     // lib département
         statut_juridique: row[27] || null,
         adresse: [row[7], row[8], row[9]].filter(Boolean).join(" ") || null,
-        code_postal: row[12] || null,
+        code_postal: codePostal,
         telephone: row[16] || null,
         latitude: geo?.lat || null,
         longitude: geo?.lon || null,
