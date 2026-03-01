@@ -40,35 +40,51 @@ export async function importGht(
   onProgress?.(`${rows.length} lignes, colonnes: ${headers.join(", ")}`);
 
   const sample = rows[0] || {};
-  const codeCol = findCol(sample, "Code GHT", "code_ght", "CODE_GHT", "Code");
-  const nomCol = findCol(sample, "Nom du GHT", "nom_ght", "NOM_GHT", "Nom", "Libellé", "Libellé GHT");
-  const regionCol = findCol(sample, "Région", "region", "REGION", "Libellé région");
-  const codeRegionCol = findCol(sample, "Code région", "code_region", "Code Région");
-  const nbMembresCol = findCol(sample, "Nb membres", "nb_membres", "Nombre de membres");
-  const supportCol = findCol(sample, "FINESS support", "finess_support", "Établissement support", "ES Support FINESS", "FINESS ES support", "Finess ES");
+  const codeCol = findCol(sample, "GHT_CODE", "Code GHT", "code_ght", "CODE_GHT", "Code");
+  const nomCol = findCol(sample, "GHT_LIB", "GHT_LIBC", "Nom du GHT", "nom_ght", "NOM_GHT", "Nom", "Libellé", "Libellé GHT");
+  const regionCol = findCol(sample, "ARS_LIB", "ARS_LIBC", "Région", "region", "REGION", "Libellé région");
+  const codeRegionCol = findCol(sample, "ARS_CODE", "Code région", "code_region", "Code Région");
+  const supportCol = findCol(sample, "GHT_SUPPORT", "ES_FINESS", "FINESS support", "finess_support", "Établissement support", "ES Support FINESS", "FINESS ES support", "Finess ES");
 
   if (!codeCol) throw new Error(`Colonne code GHT introuvable. Colonnes: ${headers.join(", ")}`);
   if (!nomCol) throw new Error(`Colonne nom GHT introuvable. Colonnes: ${headers.join(", ")}`);
 
   onProgress?.(`Code: "${codeCol}", Nom: "${nomCol}", Support: "${supportCol || "??"}"`);
 
-  const records: Record<string, any>[] = [];
+  // The file has one row per ES member — deduplicate by GHT_CODE
+  const ghtMap = new Map<string, { ght_code: string; ght_nom: string; region: string | null; code_region: string | null; nb_membres: number; etablissement_support_finess: string | null }>();
+
   for (const row of rows) {
     const code = String(row[codeCol]).trim();
     const nom = String(row[nomCol]).trim();
     if (!code || !nom) continue;
 
-    records.push({
-      ght_code: code,
-      ght_nom: nom,
-      region: regionCol ? String(row[regionCol]).trim() || null : null,
-      code_region: codeRegionCol ? String(row[codeRegionCol]).trim() || null : null,
-      nb_membres: nbMembresCol ? parseInt(String(row[nbMembresCol])) || null : null,
-      etablissement_support_finess: supportCol ? String(row[supportCol]).trim() || null : null,
-    });
+    const existing = ghtMap.get(code);
+    if (existing) {
+      existing.nb_membres++;
+      // Keep the support FINESS from the row flagged as support
+      if (supportCol && String(row[supportCol]).trim() === "O") {
+        // Find the ES_FINESS column for the support establishment
+        const esFiness = findCol(row, "ES_FINESS", "FINESS");
+        if (esFiness) existing.etablissement_support_finess = String(row[esFiness]).trim() || existing.etablissement_support_finess;
+      }
+    } else {
+      const esFiness = findCol(row, "ES_FINESS", "FINESS");
+      ghtMap.set(code, {
+        ght_code: code,
+        ght_nom: nom,
+        region: regionCol ? String(row[regionCol]).trim() || null : null,
+        code_region: codeRegionCol ? String(row[codeRegionCol]).trim() || null : null,
+        nb_membres: 1,
+        etablissement_support_finess: supportCol && String(row[supportCol]).trim() === "O" && esFiness
+          ? String(row[esFiness]).trim() || null
+          : null,
+      });
+    }
   }
 
-  onProgress?.(`${records.length} GHT à importer…`);
+  const records = Array.from(ghtMap.values());
+  onProgress?.(`${records.length} GHT dédupliqués à importer…`);
 
   await supabase.from("ghts").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
@@ -95,8 +111,8 @@ export async function importHpr(
   onProgress?.(`${rows.length} lignes, colonnes: ${headers.join(", ")}`);
 
   const sample = rows[0] || {};
-  const finessCol = findCol(sample, "N° FINESS ET", "FINESS ET", "finess_geo", "FINESS_GEO", "N° FINESS", "FINESS", "Finess ET", "Finess");
-  const nomCol = findCol(sample, "Raison sociale ET", "Raison sociale", "RS", "Nom", "Raison Sociale");
+  const finessCol = findCol(sample, "FI_ET", "N° FINESS ET", "FINESS ET", "finess_geo", "FINESS_GEO", "N° FINESS", "FINESS", "Finess ET", "Finess");
+  const nomCol = findCol(sample, "RS_ET", "Raison sociale ET", "Raison sociale", "RS", "Nom", "Raison Sociale");
 
   if (!finessCol) throw new Error(`Colonne FINESS introuvable. Colonnes: ${headers.join(", ")}`);
 

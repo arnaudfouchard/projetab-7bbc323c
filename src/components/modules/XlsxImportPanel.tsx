@@ -27,13 +27,13 @@ const ghtProfile: ImportProfile = {
   dataSourceId: "ght",
   conflictColumn: "ght_code",
   mapRow: (row) => {
-    // Try multiple possible column names
-    const code = row["Code GHT"] || row["code_ght"] || row["CODE_GHT"] || row["Code"] || "";
-    const nom = row["Nom du GHT"] || row["nom_ght"] || row["NOM_GHT"] || row["Nom"] || row["Libellé"] || "";
-    const region = row["Région"] || row["region"] || row["REGION"] || row["Libellé région"] || null;
-    const codeRegion = row["Code région"] || row["code_region"] || null;
+    // Try multiple possible column names (DGOS format: GHT_CODE, GHT_LIB, etc.)
+    const code = row["GHT_CODE"] || row["Code GHT"] || row["code_ght"] || row["CODE_GHT"] || row["Code"] || "";
+    const nom = row["GHT_LIB"] || row["GHT_LIBC"] || row["Nom du GHT"] || row["nom_ght"] || row["NOM_GHT"] || row["Nom"] || row["Libellé"] || "";
+    const region = row["ARS_LIB"] || row["ARS_LIBC"] || row["Région"] || row["region"] || row["REGION"] || row["Libellé région"] || null;
+    const codeRegion = row["ARS_CODE"] || row["Code région"] || row["code_region"] || null;
     const nbMembres = parseInt(row["Nb membres"] || row["nb_membres"] || row["Nombre de membres"] || "0") || null;
-    const support = row["FINESS support"] || row["finess_support"] || row["Établissement support"] || row["ES Support FINESS"] || null;
+    const support = row["GHT_SUPPORT"] || row["ES_FINESS"] || row["FINESS support"] || row["finess_support"] || row["Établissement support"] || row["ES Support FINESS"] || null;
 
     if (!code || !nom) return null;
 
@@ -95,10 +95,10 @@ const hprProfile: ImportProfile = {
   dataSourceId: "hpr",
   conflictColumn: "finess_geo",
   mapRow: (row) => {
-    const finess_geo = row["N° FINESS ET"] || row["FINESS ET"] || row["finess_geo"] || row["FINESS_GEO"] || row["N° FINESS"] || row["FINESS"] || "";
+    const finess_geo = row["FI_ET"] || row["N° FINESS ET"] || row["FINESS ET"] || row["finess_geo"] || row["FINESS_GEO"] || row["N° FINESS"] || row["FINESS"] || "";
     if (!finess_geo) return null;
 
-    const nom = row["Raison sociale ET"] || row["Raison sociale"] || row["RS"] || row["Nom"] || null;
+    const nom = row["RS_ET"] || row["Raison sociale ET"] || row["Raison sociale"] || row["RS"] || row["Nom"] || null;
 
     const record: Record<string, any> = {
       finess_geo: String(finess_geo).trim(),
