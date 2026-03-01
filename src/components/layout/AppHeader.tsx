@@ -6,9 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 
-const navItems = [
-  { label: "Dashboard", href: "/" },
-];
+const navItems: { label: string; href: string }[] = [];
 
 export function AppHeader() {
   const location = useLocation();
