@@ -10,11 +10,30 @@ async function fetchAndParse(url: string): Promise<{ headers: string[]; rows: Re
   const wb = XLSX.read(ab, { type: "array" });
 
   // Try all sheets, pick the one with the most data
+  // Also try skipping title rows (range) to find the real header
   let bestRows: Record<string, any>[] = [];
   for (const name of wb.SheetNames) {
     const ws = wb.Sheets[name];
-    const json: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
-    if (json.length > bestRows.length) bestRows = json;
+
+    // Try with different header row offsets (0 = default, then skip 1..6 rows)
+    for (let skip = 0; skip <= 6; skip++) {
+      const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+      range.s.r = skip; // start from row `skip`
+      const json: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, {
+        defval: "",
+        range,
+      });
+      if (json.length === 0) continue;
+
+      const keys = Object.keys(json[0]);
+      const emptyCount = keys.filter((k) => /^__EMPTY/.test(k) || k.trim() === "").length;
+      const meaningfulRatio = 1 - emptyCount / keys.length;
+
+      // Accept if most columns have meaningful names (>50%)
+      if (meaningfulRatio > 0.5 && json.length > bestRows.length) {
+        bestRows = json;
+      }
+    }
   }
 
   const headers = bestRows.length > 0 ? Object.keys(bestRows[0]) : [];
@@ -46,9 +65,9 @@ export async function importAldNational(
 
   // Find ALD code + libelle columns
   const sampleRow = rows[0] || {};
-  const codeCol = findCol(sampleRow, "ALD", "Code ALD", "code_ald", "Numéro ALD", "N° ALD", "ald");
-  const libelleCol = findCol(sampleRow, "Libellé ALD", "Libellé", "libelle_ald", "Libellé de l'ALD", "libelle", "Pathologie");
-  const prevalenceCol = findCol(sampleRow, "Prévalence", "prevalence", "Taux");
+  const codeCol = findCol(sampleRow, "ALD", "Code ALD", "code_ald", "Numéro ALD", "N° ALD", "ald", "Code");
+  const libelleCol = findCol(sampleRow, "Libellé ALD", "Libellé", "libelle_ald", "Libellé de l'ALD", "libelle", "Pathologie", "Libellé de l\u2019ALD");
+  const prevalenceCol = findCol(sampleRow, "Prévalence", "prevalence", "Taux", "Prévalence pour 100 000");
 
   if (!codeCol) {
     // Log headers for debugging
@@ -132,47 +151,76 @@ export async function importAldDepartement(
 ): Promise<{ imported: number; errors: number; headers: string[] }> {
   onProgress?.("Chargement du fichier ALD départemental…");
   const { headers, rows } = await fetchAndParse("/data/ald-prevalentes-departement.xls");
-  onProgress?.(`${rows.length} lignes, colonnes: ${headers.join(", ")}`);
+  onProgress?.(`${rows.length} lignes, colonnes: ${headers.slice(0, 5).join(", ")}…`);
 
   const sampleRow = rows[0] || {};
-  const codeAldCol = findCol(sampleRow, "ALD", "Code ALD", "code_ald", "Numéro ALD", "N° ALD", "ald");
-  const depCol = findCol(sampleRow, "Département", "Code département", "code_departement", "Dept", "dept", "DEP", "département");
-  const libelleCol = findCol(sampleRow, "Libellé ALD", "Libellé", "libelle_ald", "Pathologie");
-  const effectifCol = findCol(sampleRow, "Effectif", "effectif", "Nombre", "Nb", "Prévalents");
-  const anneeCol = findCol(sampleRow, "Année", "annee", "Annee");
-
-  if (!codeAldCol) {
-    console.warn("ALD Dept - colonnes disponibles:", headers);
-    throw new Error(`Colonne code ALD introuvable. Colonnes: ${headers.join(", ")}`);
-  }
-
+  const depCol = findCol(sampleRow, "Code département", "Département", "code_departement", "Dept", "dept", "DEP", "département");
+  
   if (!depCol) {
     console.warn("ALD Dept - colonnes disponibles:", headers);
     throw new Error(`Colonne département introuvable. Colonnes: ${headers.join(", ")}`);
   }
 
-  onProgress?.(`Code ALD: "${codeAldCol}", Dept: "${depCol}", Effectif: "${effectifCol || "??"}"`);
+  // Detect ALD columns: columns containing "(ALD" + number + ")"
+  const aldColRegex = /\(ALD\s*(\d+)\)/i;
+  const aldCols = headers
+    .filter((h) => aldColRegex.test(h))
+    .map((h) => ({ col: h, code: parseInt(h.match(aldColRegex)![1]) }));
 
-  const records: Record<string, any>[] = [];
-
-  for (const row of rows) {
-    const codeAld = parseInt(String(row[codeAldCol]).trim());
-    const codeDep = String(row[depCol]).trim();
-    if (isNaN(codeAld) || !codeDep) continue;
-
-    const libelle = libelleCol ? String(row[libelleCol]).trim() : null;
-    const effectif = effectifCol ? parseInt(String(row[effectifCol]).replace(/\s/g, "")) || null : null;
-    const annee = anneeCol ? parseInt(String(row[anneeCol])) : 2024;
-
-    records.push({
-      code_departement: codeDep.padStart(2, "0"),
-      code_ald: codeAld,
-      libelle_ald: libelle,
-      annee: isNaN(annee) ? 2024 : annee,
-      effectif,
-    });
+  if (aldCols.length === 0) {
+    // Fallback: try row-based format
+    const codeAldCol = findCol(sampleRow, "ALD", "Code ALD", "code_ald", "Numéro ALD", "N° ALD", "ald");
+    if (!codeAldCol) throw new Error(`Ni colonnes ALD pivotées ni colonne code ALD trouvées. Colonnes: ${headers.slice(0, 10).join(", ")}`);
+    // row-based fallback (original logic)
+    const libelleCol = findCol(sampleRow, "Libellé ALD", "Libellé", "libelle_ald", "Pathologie");
+    const effectifCol = findCol(sampleRow, "Effectif", "effectif", "Nombre", "Nb", "Prévalents");
+    const anneeCol = findCol(sampleRow, "Année", "annee", "Annee");
+    const records: Record<string, any>[] = [];
+    for (const row of rows) {
+      const codeAld = parseInt(String(row[codeAldCol]).trim());
+      const codeDep = String(row[depCol]).trim();
+      if (isNaN(codeAld) || !codeDep) continue;
+      records.push({
+        code_departement: codeDep.padStart(2, "0"),
+        code_ald: codeAld,
+        libelle_ald: libelleCol ? String(row[libelleCol]).trim() : null,
+        annee: anneeCol ? parseInt(String(row[anneeCol])) || 2024 : 2024,
+        effectif: effectifCol ? parseInt(String(row[effectifCol]).replace(/\s/g, "")) || null : null,
+      });
+    }
+    return await insertAldDept(records, headers, onProgress);
   }
 
+  onProgress?.(`Format pivoté détecté: ${aldCols.length} ALD, dept col: "${depCol}"`);
+
+  const records: Record<string, any>[] = [];
+  for (const row of rows) {
+    const codeDep = String(row[depCol]).trim();
+    if (!codeDep || codeDep === "") continue;
+
+    for (const { col, code } of aldCols) {
+      const rawVal = String(row[col]).replace(/\s/g, "").replace(",", ".").replace("<", "");
+      const effectif = parseInt(rawVal) || null;
+      // Extract short ALD label from column name
+      const libelle = col.replace(/\s*\(ALD\s*\d+\)\s*$/i, "").trim();
+      records.push({
+        code_departement: codeDep.padStart(2, "0"),
+        code_ald: code,
+        libelle_ald: libelle,
+        annee: 2024,
+        effectif,
+      });
+    }
+  }
+
+  return await insertAldDept(records, headers, onProgress);
+}
+
+async function insertAldDept(
+  records: Record<string, any>[],
+  headers: string[],
+  onProgress?: (msg: string) => void
+): Promise<{ imported: number; errors: number; headers: string[] }> {
   onProgress?.(`${records.length} enregistrements à importer…`);
 
   // Clear existing data
