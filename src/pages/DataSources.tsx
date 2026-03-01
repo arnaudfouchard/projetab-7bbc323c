@@ -211,7 +211,7 @@ export default function DataSources() {
                       <TableCell className="text-right text-sm font-medium">{(ds.record_count || 0).toLocaleString("fr-FR")}</TableCell>
                       <TableCell><StatusDot status={ds.status} /></TableCell>
                       <TableCell>
-                        {(IMPORTABLE[ds.id] || ALD_SOURCES.includes(ds.id)) && (
+                        {(IMPORTABLE[ds.id] || CLIENT_IMPORTABLE.includes(ds.id)) && (
                           <Button
                             variant="outline"
                             size="sm"
