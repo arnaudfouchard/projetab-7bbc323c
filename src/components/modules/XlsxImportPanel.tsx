@@ -95,10 +95,10 @@ const hprProfile: ImportProfile = {
   dataSourceId: "hpr",
   conflictColumn: "finess_geo",
   mapRow: (row) => {
-    const finess_geo = row["N° FINESS ET"] || row["FINESS ET"] || row["finess_geo"] || row["FINESS_GEO"] || row["N° FINESS"] || row["FINESS"] || "";
+    const finess_geo = row["FI_ET"] || row["N° FINESS ET"] || row["FINESS ET"] || row["finess_geo"] || row["FINESS_GEO"] || row["N° FINESS"] || row["FINESS"] || "";
     if (!finess_geo) return null;
 
-    const nom = row["Raison sociale ET"] || row["Raison sociale"] || row["RS"] || row["Nom"] || null;
+    const nom = row["RS_ET"] || row["Raison sociale ET"] || row["Raison sociale"] || row["RS"] || row["Nom"] || null;
 
     const record: Record<string, any> = {
       finess_geo: String(finess_geo).trim(),
