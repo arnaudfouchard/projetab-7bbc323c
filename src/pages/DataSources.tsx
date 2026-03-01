@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Database, RefreshCw, Play, Loader2 } from "lucide-react";
 import { importAldNational, importAldDepartement } from "@/lib/import-ald";
+import { importGht, importHpr } from "@/lib/import-ght-hpr";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,9 @@ const IMPORTABLE: Record<string, string> = {
 // ALD sources that use client-side import from bundled files
 const ALD_SOURCES = ["ald", "ald_national"];
 
+// Client-side importable sources (bundled files)
+const CLIENT_IMPORTABLE = ["ald", "ald_national", "ght", "hpr"];
+
 function StatusDot({ status }: { status: string }) {
   const colors: Record<string, string> = {
     ok: "bg-green-500",
@@ -71,20 +75,24 @@ export default function DataSources() {
   });
 
   const runImport = async (sourceId: string) => {
-    // Client-side ALD import
-    if (sourceId === "ald" || sourceId === "ald_national") {
+    // Client-side imports from bundled files
+    const clientImports: Record<string, (cb?: (m: string) => void) => Promise<{ imported: number; errors: number; headers: string[] }>> = {
+      ald: importAldDepartement,
+      ald_national: importAldNational,
+      ght: importGht,
+      hpr: importHpr,
+    };
+
+    if (clientImports[sourceId]) {
       setImporting(sourceId);
       try {
-        toast.info(`Import ALD lancé…`);
-        const importFn = sourceId === "ald" ? importAldDepartement : importAldNational;
-        const result = await importFn((msg) => console.log(`[ALD] ${msg}`));
+        toast.info(`Import ${sourceId} lancé…`);
+        const result = await clientImports[sourceId]((msg) => console.log(`[${sourceId}] ${msg}`));
         toast.success(`Import terminé : ${result.imported} enregistrements (${result.errors} erreurs)`);
-        if (result.errors > 0) {
-          console.warn("Colonnes détectées:", result.headers);
-        }
+        if (result.errors > 0) console.warn("Colonnes détectées:", result.headers);
         refetch();
       } catch (err: any) {
-        toast.error(`Erreur import ALD : ${err.message}`);
+        toast.error(`Erreur import : ${err.message}`);
       } finally {
         setImporting(null);
       }
@@ -203,7 +211,7 @@ export default function DataSources() {
                       <TableCell className="text-right text-sm font-medium">{(ds.record_count || 0).toLocaleString("fr-FR")}</TableCell>
                       <TableCell><StatusDot status={ds.status} /></TableCell>
                       <TableCell>
-                        {(IMPORTABLE[ds.id] || ALD_SOURCES.includes(ds.id)) && (
+                        {(IMPORTABLE[ds.id] || CLIENT_IMPORTABLE.includes(ds.id)) && (
                           <Button
                             variant="outline"
                             size="sm"
