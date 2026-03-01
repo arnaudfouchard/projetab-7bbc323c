@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Database, RefreshCw, Play, Loader2 } from "lucide-react";
 import { importAldNational, importAldDepartement } from "@/lib/import-ald";
 import { importGht, importHpr } from "@/lib/import-ght-hpr";
+import { importFiness } from "@/lib/import-finess";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,16 +32,12 @@ interface DataSource {
 }
 
 const IMPORTABLE: Record<string, string> = {
-  finess: "import-finess",
   certification_has: "import-has-certification",
   insee: "import-population",
 };
 
-// ALD sources that use client-side import from bundled files
-const ALD_SOURCES = ["ald", "ald_national"];
-
 // Client-side importable sources (bundled files)
-const CLIENT_IMPORTABLE = ["ald", "ald_national", "ght", "hpr"];
+const CLIENT_IMPORTABLE = ["finess", "ald", "ald_national", "ght", "hpr"];
 
 function StatusDot({ status }: { status: string }) {
   const colors: Record<string, string> = {
@@ -77,6 +74,7 @@ export default function DataSources() {
   const runImport = async (sourceId: string) => {
     // Client-side imports from bundled files
     const clientImports: Record<string, (cb?: (m: string) => void) => Promise<{ imported: number; errors: number; headers: string[] }>> = {
+      finess: importFiness,
       ald: importAldDepartement,
       ald_national: importAldNational,
       ght: importGht,
