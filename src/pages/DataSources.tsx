@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Database, RefreshCw, Play, Loader2 } from "lucide-react";
+import { importAldNational, importAldDepartement } from "@/lib/import-ald";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
