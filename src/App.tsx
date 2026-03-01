@@ -36,6 +36,7 @@ const App = () => (
                     <Route path="/projects/select-modules" element={<SelectModules />} />
                     <Route path="/projects/:id" element={<Workspace />} />
                     <Route path="/explore" element={<Explore />} />
+                    <Route path="/explore/:module" element={<Explore />} />
                     <Route path="/admin/users" element={<AdminUsers />} />
                     <Route path="/data-sources" element={<DataSources />} />
                     <Route path="*" element={<NotFound />} />
