@@ -213,6 +213,32 @@ serve(async (req) => {
     const indexed = results.filter(r => r.status === "indexed").length;
     const skippedDup = results.filter(r => r.status === "skipped_duplicate").length;
 
+    // Update data_sources record count for Pinecone documents
+    if (indexed > 0) {
+      try {
+        const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+        const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+        const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        
+        // Get current count and add newly indexed
+        const { data: current } = await sb
+          .from("data_sources")
+          .select("record_count")
+          .eq("id", "pinecone-documents")
+          .single();
+        
+        const newCount = (current?.record_count || 0) + totalChunks;
+        await sb.from("data_sources").update({
+          record_count: newCount,
+          last_update: new Date().toISOString(),
+          status: "ok",
+        }).eq("id", "pinecone-documents");
+      } catch (e) {
+        console.error("Failed to update data_sources count:", e);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         message: `${indexed}/${documents.length} documents indexés, ${totalChunks} chunks créés, ${skippedDup} doublons ignorés`,

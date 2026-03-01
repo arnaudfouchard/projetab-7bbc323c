@@ -59,7 +59,7 @@ const TYPE_ETAB_OPTIONS = ["CHR/U", "CH", "CHS/psy", "SMR", "ESPIC", "Privé", "
 const SUPPORTED_EXTENSIONS = ["pdf", "docx", "pptx", "txt", "md"];
 const MAX_DOCUMENTS = 20;
 
-const DEFAULT_REPO = "arthur-lmusic/pe_pms";
+const DEFAULT_REPO = "arnaudfouchard/pe_pms";
 
 /* ------------------------------------------------------------------ */
 /* Text extraction helpers                                             */
