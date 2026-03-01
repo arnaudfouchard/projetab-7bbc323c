@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      certification_has: {
+        Row: {
+          created_at: string
+          date_decision: string | null
+          date_visite: string | null
+          finess_geo: string
+          id: string
+          niveau: string | null
+          recommandations: number | null
+          reserves: number | null
+          reserves_majeures: number | null
+        }
+        Insert: {
+          created_at?: string
+          date_decision?: string | null
+          date_visite?: string | null
+          finess_geo: string
+          id?: string
+          niveau?: string | null
+          recommandations?: number | null
+          reserves?: number | null
+          reserves_majeures?: number | null
+        }
+        Update: {
+          created_at?: string
+          date_decision?: string | null
+          date_visite?: string | null
+          finess_geo?: string
+          id?: string
+          niveau?: string | null
+          recommandations?: number | null
+          reserves?: number | null
+          reserves_majeures?: number | null
+        }
+        Relationships: []
+      }
+      data_sources: {
+        Row: {
+          created_at: string
+          data_date: string | null
+          description: string | null
+          format: string | null
+          id: string
+          last_update: string | null
+          name: string
+          record_count: number | null
+          source: string | null
+          source_url: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          data_date?: string | null
+          description?: string | null
+          format?: string | null
+          id: string
+          last_update?: string | null
+          name: string
+          record_count?: number | null
+          source?: string | null
+          source_url?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          data_date?: string | null
+          description?: string | null
+          format?: string | null
+          id?: string
+          last_update?: string | null
+          name?: string
+          record_count?: number | null
+          source?: string | null
+          source_url?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       enjeux_strategiques: {
         Row: {
           actions: Json | null
@@ -50,6 +128,117 @@ export type Database = {
           synthese_globale?: string | null
           titre?: string
           verbatims?: string[] | null
+        }
+        Relationships: []
+      }
+      etablissements: {
+        Row: {
+          adresse: string | null
+          categorie_code: string | null
+          categorie_libelle: string | null
+          code_commune: string | null
+          code_departement: string | null
+          code_postal: string | null
+          code_region: string | null
+          commune: string | null
+          created_at: string
+          departement: string | null
+          effectifs_med: number | null
+          effectifs_non_med: number | null
+          finess_geo: string
+          finess_juridique: string | null
+          ght_code: string | null
+          ght_nom: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          nb_lits: number | null
+          nb_lits_chirurgie: number | null
+          nb_lits_medecine: number | null
+          nb_lits_obstetrique: number | null
+          nb_lits_psy: number | null
+          nb_lits_ssr: number | null
+          nb_places: number | null
+          nb_places_ambulatoire: number | null
+          nb_urgences: number | null
+          nom: string
+          region: string | null
+          statut_juridique: string | null
+          telephone: string | null
+          type_etab: string | null
+          updated_at: string
+        }
+        Insert: {
+          adresse?: string | null
+          categorie_code?: string | null
+          categorie_libelle?: string | null
+          code_commune?: string | null
+          code_departement?: string | null
+          code_postal?: string | null
+          code_region?: string | null
+          commune?: string | null
+          created_at?: string
+          departement?: string | null
+          effectifs_med?: number | null
+          effectifs_non_med?: number | null
+          finess_geo: string
+          finess_juridique?: string | null
+          ght_code?: string | null
+          ght_nom?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nb_lits?: number | null
+          nb_lits_chirurgie?: number | null
+          nb_lits_medecine?: number | null
+          nb_lits_obstetrique?: number | null
+          nb_lits_psy?: number | null
+          nb_lits_ssr?: number | null
+          nb_places?: number | null
+          nb_places_ambulatoire?: number | null
+          nb_urgences?: number | null
+          nom: string
+          region?: string | null
+          statut_juridique?: string | null
+          telephone?: string | null
+          type_etab?: string | null
+          updated_at?: string
+        }
+        Update: {
+          adresse?: string | null
+          categorie_code?: string | null
+          categorie_libelle?: string | null
+          code_commune?: string | null
+          code_departement?: string | null
+          code_postal?: string | null
+          code_region?: string | null
+          commune?: string | null
+          created_at?: string
+          departement?: string | null
+          effectifs_med?: number | null
+          effectifs_non_med?: number | null
+          finess_geo?: string
+          finess_juridique?: string | null
+          ght_code?: string | null
+          ght_nom?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nb_lits?: number | null
+          nb_lits_chirurgie?: number | null
+          nb_lits_medecine?: number | null
+          nb_lits_obstetrique?: number | null
+          nb_lits_psy?: number | null
+          nb_lits_ssr?: number | null
+          nb_places?: number | null
+          nb_places_ambulatoire?: number | null
+          nb_urgences?: number | null
+          nom?: string
+          region?: string | null
+          statut_juridique?: string | null
+          telephone?: string | null
+          type_etab?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -96,6 +285,216 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ghts: {
+        Row: {
+          code_region: string | null
+          created_at: string
+          etablissement_support_finess: string | null
+          ght_code: string
+          ght_nom: string
+          id: string
+          nb_membres: number | null
+          region: string | null
+          updated_at: string
+        }
+        Insert: {
+          code_region?: string | null
+          created_at?: string
+          etablissement_support_finess?: string | null
+          ght_code: string
+          ght_nom: string
+          id?: string
+          nb_membres?: number | null
+          region?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code_region?: string | null
+          created_at?: string
+          etablissement_support_finess?: string | null
+          ght_code?: string
+          ght_nom?: string
+          id?: string
+          nb_membres?: number | null
+          region?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      population_communes: {
+        Row: {
+          annee_recensement: number | null
+          code_commune: string
+          code_departement: string | null
+          code_region: string | null
+          created_at: string
+          densite: number | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          nom_commune: string | null
+          population: number | null
+          population_0_14: number | null
+          population_15_29: number | null
+          population_30_44: number | null
+          population_45_59: number | null
+          population_60_74: number | null
+          population_75_plus: number | null
+          superficie: number | null
+        }
+        Insert: {
+          annee_recensement?: number | null
+          code_commune: string
+          code_departement?: string | null
+          code_region?: string | null
+          created_at?: string
+          densite?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nom_commune?: string | null
+          population?: number | null
+          population_0_14?: number | null
+          population_15_29?: number | null
+          population_30_44?: number | null
+          population_45_59?: number | null
+          population_60_74?: number | null
+          population_75_plus?: number | null
+          superficie?: number | null
+        }
+        Update: {
+          annee_recensement?: number | null
+          code_commune?: string
+          code_departement?: string | null
+          code_region?: string | null
+          created_at?: string
+          densite?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nom_commune?: string | null
+          population?: number | null
+          population_0_14?: number | null
+          population_15_29?: number | null
+          population_30_44?: number | null
+          population_45_59?: number | null
+          population_60_74?: number | null
+          population_75_plus?: number | null
+          superficie?: number | null
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string
+          department: string | null
+          entity_type: string
+          finess: string | null
+          ght_code: string | null
+          id: string
+          is_exploration: boolean
+          modules: string[]
+          name: string
+          region: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          entity_type?: string
+          finess?: string | null
+          ght_code?: string | null
+          id?: string
+          is_exploration?: boolean
+          modules?: string[]
+          name: string
+          region?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          entity_type?: string
+          finess?: string | null
+          ght_code?: string | null
+          id?: string
+          is_exploration?: boolean
+          modules?: string[]
+          name?: string
+          region?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sae_capacites: {
+        Row: {
+          annee: number
+          created_at: string
+          duree_moyenne_sejour: number | null
+          finess_geo: string
+          id: string
+          nb_accouchements: number | null
+          nb_lits_chirurgie: number | null
+          nb_lits_medecine: number | null
+          nb_lits_obstetrique: number | null
+          nb_lits_psy: number | null
+          nb_lits_ssr: number | null
+          nb_lits_total: number | null
+          nb_passages_urgences: number | null
+          nb_places_ambulatoire: number | null
+          nb_places_total: number | null
+          nb_sejours_ambulatoire: number | null
+          nb_sejours_total: number | null
+          taux_ambulatoire: number | null
+        }
+        Insert: {
+          annee: number
+          created_at?: string
+          duree_moyenne_sejour?: number | null
+          finess_geo: string
+          id?: string
+          nb_accouchements?: number | null
+          nb_lits_chirurgie?: number | null
+          nb_lits_medecine?: number | null
+          nb_lits_obstetrique?: number | null
+          nb_lits_psy?: number | null
+          nb_lits_ssr?: number | null
+          nb_lits_total?: number | null
+          nb_passages_urgences?: number | null
+          nb_places_ambulatoire?: number | null
+          nb_places_total?: number | null
+          nb_sejours_ambulatoire?: number | null
+          nb_sejours_total?: number | null
+          taux_ambulatoire?: number | null
+        }
+        Update: {
+          annee?: number
+          created_at?: string
+          duree_moyenne_sejour?: number | null
+          finess_geo?: string
+          id?: string
+          nb_accouchements?: number | null
+          nb_lits_chirurgie?: number | null
+          nb_lits_medecine?: number | null
+          nb_lits_obstetrique?: number | null
+          nb_lits_psy?: number | null
+          nb_lits_ssr?: number | null
+          nb_lits_total?: number | null
+          nb_passages_urgences?: number | null
+          nb_places_ambulatoire?: number | null
+          nb_places_total?: number | null
+          nb_sejours_ambulatoire?: number | null
+          nb_sejours_total?: number | null
+          taux_ambulatoire?: number | null
+        }
+        Relationships: []
       }
     }
     Views: {
