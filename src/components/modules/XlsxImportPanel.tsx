@@ -88,7 +88,31 @@ const finessRapprochementProfile: ImportProfile = {
   },
 };
 
-const PROFILES: ImportProfile[] = [ghtProfile, finessRapprochementProfile];
+// ── HPR (Hôpitaux de Proximité) profile ──────────────────────────
+const hprProfile: ImportProfile = {
+  label: "Hôpitaux de proximité (HPR)",
+  table: "etablissements",
+  dataSourceId: "hpr",
+  conflictColumn: "finess_geo",
+  mapRow: (row) => {
+    const finess_geo = row["N° FINESS ET"] || row["FINESS ET"] || row["finess_geo"] || row["FINESS_GEO"] || row["N° FINESS"] || row["FINESS"] || "";
+    if (!finess_geo) return null;
+
+    const nom = row["Raison sociale ET"] || row["Raison sociale"] || row["RS"] || row["Nom"] || null;
+
+    const record: Record<string, any> = {
+      finess_geo: String(finess_geo).trim(),
+      is_hopital_proximite: true,
+    };
+
+    if (nom) record.nom = String(nom).trim();
+    else record.nom = "Inconnu";
+
+    return record;
+  },
+};
+
+const PROFILES: ImportProfile[] = [ghtProfile, finessRapprochementProfile, hprProfile];
 
 export function XlsxImportPanel({ onImportDone }: { onImportDone?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
@@ -119,7 +143,10 @@ export function XlsxImportPanel({ onImportDone }: { onImportDone?: () => void })
 
     // Auto-detect profile
     const hdrLower = hdrs.map((h) => h.toLowerCase());
-    if (hdrLower.some((h) => h.includes("ght"))) {
+    const nameLower = f.name.toLowerCase();
+    if (nameLower.includes("hpr") || nameLower.includes("proximité") || nameLower.includes("proximite")) {
+      setSelectedProfile(hprProfile);
+    } else if (hdrLower.some((h) => h.includes("ght")) || nameLower.includes("ght")) {
       setSelectedProfile(ghtProfile);
     } else if (hdrLower.some((h) => h.includes("finess"))) {
       setSelectedProfile(finessRapprochementProfile);

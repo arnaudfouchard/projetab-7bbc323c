@@ -195,6 +195,7 @@ export type Database = {
           ght_code: string | null
           ght_nom: string | null
           id: string
+          is_hopital_proximite: boolean | null
           latitude: number | null
           longitude: number | null
           nb_lits: number | null
@@ -231,6 +232,7 @@ export type Database = {
           ght_code?: string | null
           ght_nom?: string | null
           id?: string
+          is_hopital_proximite?: boolean | null
           latitude?: number | null
           longitude?: number | null
           nb_lits?: number | null
@@ -267,6 +269,7 @@ export type Database = {
           ght_code?: string | null
           ght_nom?: string | null
           id?: string
+          is_hopital_proximite?: boolean | null
           latitude?: number | null
           longitude?: number | null
           nb_lits?: number | null
