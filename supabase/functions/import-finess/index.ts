@@ -7,17 +7,43 @@ const corsHeaders = {
 
 const FINESS_DATASET_ID = "finess-extraction-du-fichier-des-etablissements";
 
-function categorize(catCode: string | null): string {
-  if (!catCode) return "Autre";
+// Sanitaire category codes (FINESS nomenclature)
+// Excludes médico-social: EHPAD (500, 501, 502), SSIAD (354→only some), SAD, foyers, IME, etc.
+const SANITAIRE_CATS = new Set([
+  // CHR/U
+  101, 106,
+  // CH
+  114, 122, 131, 141, 292, 355, 365,
+  // CHS / psy
+  128, 129, 297, 442,
+  // SMR / SSR
+  126, 127, 132, 133, 134, 135, 136, 137, 138, 160, 162,
+  // ESPIC
+  354, 356, 362, 366,
+  // Cliniques privées MCO
+  110, 111, 112, 113, 120, 121, 123, 124, 130, 140, 142, 143, 150, 161, 163,
+  // HAD
+  125,
+  // Centres de dialyse / radiothérapie
+  146, 147, 148, 228, 236, 237, 238,
+  // Centres de lutte contre le cancer
+  105,
+  // Hôpital des armées
+  109,
+]);
+
+function categorize(catCode: string | null): string | null {
+  if (!catCode) return null;
   const c = parseInt(catCode);
-  if (isNaN(c)) return "Autre";
+  if (isNaN(c)) return null;
+  if (!SANITAIRE_CATS.has(c)) return null; // exclude non-sanitaire
   if ([101, 106].includes(c)) return "CHR/U";
   if ([114, 122, 131, 141, 292, 355, 365].includes(c)) return "CH";
   if ([128, 129, 297, 442].includes(c)) return "CHS/psy";
   if ([126, 127, 132, 133, 134, 135, 136, 137, 138, 160, 162].includes(c)) return "SMR";
   if ([354, 356, 362, 366].includes(c)) return "ESPIC";
   if ([110, 111, 112, 113, 120, 121, 123, 124, 130, 140, 142, 143, 150, 161, 163].includes(c)) return "Privé";
-  return "Autre";
+  return "Autre sanitaire";
 }
 
 Deno.serve(async (req) => {
@@ -97,9 +123,10 @@ Deno.serve(async (req) => {
       const finess_geo = row[1] || null;
       if (!finess_geo) continue;
 
-      // Find category code — scan for a 3-digit number that could be category
+      // Categorize — returns null for non-sanitaire (EHPAD, SSIAD, etc.)
       const catCode = row[18] || null;
       const type_etab = categorize(catCode);
+      if (!type_etab) continue; // skip médico-social
 
       if (typeFilter && typeFilter.length > 0 && !typeFilter.includes(type_etab)) continue;
 
