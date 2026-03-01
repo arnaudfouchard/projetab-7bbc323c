@@ -75,20 +75,24 @@ export default function DataSources() {
   });
 
   const runImport = async (sourceId: string) => {
-    // Client-side ALD import
-    if (sourceId === "ald" || sourceId === "ald_national") {
+    // Client-side imports from bundled files
+    const clientImports: Record<string, (cb?: (m: string) => void) => Promise<{ imported: number; errors: number; headers: string[] }>> = {
+      ald: importAldDepartement,
+      ald_national: importAldNational,
+      ght: importGht,
+      hpr: importHpr,
+    };
+
+    if (clientImports[sourceId]) {
       setImporting(sourceId);
       try {
-        toast.info(`Import ALD lancé…`);
-        const importFn = sourceId === "ald" ? importAldDepartement : importAldNational;
-        const result = await importFn((msg) => console.log(`[ALD] ${msg}`));
+        toast.info(`Import ${sourceId} lancé…`);
+        const result = await clientImports[sourceId]((msg) => console.log(`[${sourceId}] ${msg}`));
         toast.success(`Import terminé : ${result.imported} enregistrements (${result.errors} erreurs)`);
-        if (result.errors > 0) {
-          console.warn("Colonnes détectées:", result.headers);
-        }
+        if (result.errors > 0) console.warn("Colonnes détectées:", result.headers);
         refetch();
       } catch (err: any) {
-        toast.error(`Erreur import ALD : ${err.message}`);
+        toast.error(`Erreur import : ${err.message}`);
       } finally {
         setImporting(null);
       }
