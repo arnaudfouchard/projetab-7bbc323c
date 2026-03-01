@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Database, RefreshCw, FileSpreadsheet, Globe, HardDrive } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,136 +8,53 @@ import {
   Table, TableHeader, TableBody, TableHead, TableRow, TableCell,
 } from "@/components/ui/table";
 import { IngestionPanel } from "@/components/modules/IngestionPanel";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface DataSource {
   id: string;
   name: string;
-  description: string;
-  source: string;
-  sourceUrl?: string;
-  format: string;
-  dataDate: string;
-  lastUpdate: string;
-  recordCount: number;
-  status: "ok" | "stale" | "error";
+  description: string | null;
+  source: string | null;
+  source_url: string | null;
+  format: string | null;
+  data_date: string | null;
+  last_update: string | null;
+  record_count: number;
+  status: string;
 }
 
-const MOCK_DATA_SOURCES: DataSource[] = [
-  {
-    id: "finess",
-    name: "FINESS — Établissements",
-    description: "Fichier national des établissements sanitaires et sociaux",
-    source: "data.gouv.fr",
-    sourceUrl: "https://www.data.gouv.fr/fr/datasets/finess-extraction-du-fichier-des-etablissements/",
-    format: "CSV / SQLite",
-    dataDate: "2025-12-01",
-    lastUpdate: "2026-01-15",
-    recordCount: 102458,
-    status: "ok",
-  },
-  {
-    id: "sae",
-    name: "SAE — Capacités",
-    description: "Statistique annuelle des établissements de santé (lits, places, urgences)",
-    source: "DREES / opendatasoft",
-    format: "Parquet",
-    dataDate: "2023",
-    lastUpdate: "2026-01-10",
-    recordCount: 45200,
-    status: "ok",
-  },
-  {
-    id: "hospi_diag",
-    name: "Hospi Diag",
-    description: "Indicateurs qualité et performance hospitalière",
-    source: "data.gouv.fr",
-    format: "Parquet",
-    dataDate: "2022",
-    lastUpdate: "2025-11-20",
-    recordCount: 38000,
-    status: "stale",
-  },
-  {
-    id: "insee",
-    name: "INSEE — Population",
-    description: "Données démographiques et centroïdes communaux",
-    source: "INSEE / geo.api.gouv.fr",
-    format: "Parquet",
-    dataDate: "2021",
-    lastUpdate: "2026-01-12",
-    recordCount: 34968,
-    status: "ok",
-  },
-  {
-    id: "ght",
-    name: "GHT",
-    description: "Groupements hospitaliers de territoire",
-    source: "DGOS (Excel)",
-    format: "SQLite",
-    dataDate: "2024",
-    lastUpdate: "2026-02-01",
-    recordCount: 137,
-    status: "ok",
-  },
-  {
-    id: "certification_has",
-    name: "Certification HAS",
-    description: "Résultats de certification 2014-2020",
-    source: "HAS (Excel)",
-    format: "SQLite",
-    dataDate: "2014-2020",
-    lastUpdate: "2026-02-01",
-    recordCount: 2800,
-    status: "ok",
-  },
-  {
-    id: "pe_pm",
-    name: "Bibliothèque PE/PM/PMS",
-    description: "Projets d'établissement et projets médicaux indexés",
-    source: "arnaudfouchard/pe_pms (GitHub)",
-    format: "PDF → Pinecone",
-    dataDate: "2015-2025",
-    lastUpdate: "2026-02-20",
-    recordCount: 52,
-    status: "ok",
-  },
-  {
-    id: "axes",
-    name: "Axes stratégiques",
-    description: "Axes et sous-axes extraits des PE/PM existants",
-    source: "Extraction automatique",
-    format: "SQLite",
-    dataDate: "2015-2025",
-    lastUpdate: "2026-02-20",
-    recordCount: 224,
-    status: "ok",
-  },
-];
-
-function StatusDot({ status }: { status: DataSource["status"] }) {
-  const colors = {
+function StatusDot({ status }: { status: string }) {
+  const colors: Record<string, string> = {
     ok: "bg-green-500",
     stale: "bg-yellow-500",
     error: "bg-destructive",
+    pending: "bg-muted-foreground",
   };
-  const labels = { ok: "À jour", stale: "Ancien", error: "Erreur" };
+  const labels: Record<string, string> = { ok: "À jour", stale: "Ancien", error: "Erreur", pending: "En attente" };
   return (
     <span className="flex items-center gap-1.5 text-xs">
-      <span className={`h-2 w-2 rounded-full ${colors[status]}`} />
-      {labels[status]}
+      <span className={`h-2 w-2 rounded-full ${colors[status] || colors.pending}`} />
+      {labels[status] || status}
     </span>
   );
 }
 
-const formatIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  "CSV / SQLite": HardDrive,
-  "Parquet": FileSpreadsheet,
-  "SQLite": HardDrive,
-  "PDF → Pinecone": Globe,
-};
-
 export default function DataSources() {
   const navigate = useNavigate();
+
+  const { data: sources = [], isLoading, refetch } = useQuery({
+    queryKey: ["data-sources"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("data_sources")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data as DataSource[];
+    },
+  });
 
   return (
     <div className="container max-w-6xl py-10">
@@ -156,7 +72,7 @@ export default function DataSources() {
             Vue d'ensemble des sources de données disponibles, leur format et leur fraîcheur
           </p>
         </div>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
           <RefreshCw className="mr-1 h-4 w-4" /> Actualiser
         </Button>
       </div>
@@ -172,64 +88,70 @@ export default function DataSources() {
           <div className="grid gap-4 sm:grid-cols-4">
             <Card>
               <CardContent className="p-4 text-center">
-                <p className="text-2xl font-bold">{MOCK_DATA_SOURCES.length}</p>
+                <p className="text-2xl font-bold">{isLoading ? "…" : sources.length}</p>
                 <p className="text-xs text-muted-foreground">Sources</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <p className="text-2xl font-bold">{MOCK_DATA_SOURCES.reduce((s, d) => s + d.recordCount, 0).toLocaleString("fr-FR")}</p>
+                <p className="text-2xl font-bold">{isLoading ? "…" : sources.reduce((s, d) => s + (d.record_count || 0), 0).toLocaleString("fr-FR")}</p>
                 <p className="text-xs text-muted-foreground">Enregistrements</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <p className="text-2xl font-bold text-green-600">{MOCK_DATA_SOURCES.filter((d) => d.status === "ok").length}</p>
+                <p className="text-2xl font-bold text-green-600">{isLoading ? "…" : sources.filter((d) => d.status === "ok").length}</p>
                 <p className="text-xs text-muted-foreground">À jour</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <p className="text-2xl font-bold text-yellow-600">{MOCK_DATA_SOURCES.filter((d) => d.status === "stale").length}</p>
-                <p className="text-xs text-muted-foreground">À actualiser</p>
+                <p className="text-2xl font-bold text-yellow-600">{isLoading ? "…" : sources.filter((d) => d.status === "pending").length}</p>
+                <p className="text-xs text-muted-foreground">En attente</p>
               </CardContent>
             </Card>
           </div>
 
           {/* Table */}
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Format</TableHead>
-                  <TableHead>Date des données</TableHead>
-                  <TableHead>Dernière MAJ</TableHead>
-                  <TableHead className="text-right">Enregistrements</TableHead>
-                  <TableHead>Statut</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {MOCK_DATA_SOURCES.map((ds) => (
-                  <TableRow key={ds.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-sm">{ds.name}</p>
-                        <p className="text-xs text-muted-foreground">{ds.description}</p>
-                        <p className="mt-0.5 text-xs text-accent">{ds.source}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs font-mono">{ds.format}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">{ds.dataDate}</TableCell>
-                    <TableCell className="text-sm">{ds.lastUpdate}</TableCell>
-                    <TableCell className="text-right text-sm font-medium">{ds.recordCount.toLocaleString("fr-FR")}</TableCell>
-                    <TableCell><StatusDot status={ds.status} /></TableCell>
+            {isLoading ? (
+              <div className="p-6 space-y-3">
+                {[1,2,3,4].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Source</TableHead>
+                    <TableHead>Format</TableHead>
+                    <TableHead>Date des données</TableHead>
+                    <TableHead>Dernière MAJ</TableHead>
+                    <TableHead className="text-right">Enregistrements</TableHead>
+                    <TableHead>Statut</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {sources.map((ds) => (
+                    <TableRow key={ds.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-sm">{ds.name}</p>
+                          <p className="text-xs text-muted-foreground">{ds.description}</p>
+                          <p className="mt-0.5 text-xs text-accent">{ds.source}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs font-mono">{ds.format || "—"}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">{ds.data_date || "—"}</TableCell>
+                      <TableCell className="text-sm">{ds.last_update ? new Date(ds.last_update).toLocaleDateString("fr-FR") : "—"}</TableCell>
+                      <TableCell className="text-right text-sm font-medium">{(ds.record_count || 0).toLocaleString("fr-FR")}</TableCell>
+                      <TableCell><StatusDot status={ds.status} /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </Card>
         </TabsContent>
 
