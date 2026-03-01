@@ -183,9 +183,15 @@ export default function SelectEntity() {
           )}
 
           {!isLoading && query.trim().length >= 2 && results.length === 0 && (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              Aucun résultat pour « {query} »
-            </p>
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              <p>Aucun résultat pour « {query} »</p>
+              {entityType === "ght" && (
+                <p className="mt-2 text-xs">
+                  La table GHT est peut-être vide. Lancez l'import depuis la page{" "}
+                  <button onClick={() => navigate("/data-sources")} className="underline text-accent">Données en base</button>.
+                </p>
+              )}
+            </div>
           )}
 
           {query.trim().length > 0 && query.trim().length < 2 && (
