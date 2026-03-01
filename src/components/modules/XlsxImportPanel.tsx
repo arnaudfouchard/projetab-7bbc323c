@@ -238,9 +238,12 @@ export function XlsxImportPanel({ onImportDone }: { onImportDone?: () => void })
       const ws = wb.Sheets[wb.SheetNames[0]];
       const json: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
-      const mapped = json
+      const rawMapped = json
         .map((row) => selectedProfile.mapRow(row, headers))
-        .filter(Boolean) as Record<string, any>[];
+        .filter(Boolean);
+
+      // Flatten in case mapRow returns arrays (pivot case like ALD national)
+      const mapped = rawMapped.flatMap((r) => (Array.isArray(r) ? r : [r])) as Record<string, any>[];
 
       if (mapped.length === 0) {
         toast.error("Aucun enregistrement valide trouvé");
