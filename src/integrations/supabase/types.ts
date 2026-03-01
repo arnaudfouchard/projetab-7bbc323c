@@ -14,39 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      ald_departement: {
+        Row: {
+          annee: number | null
+          code_ald: number
+          code_departement: string
+          created_at: string
+          effectif: number | null
+          id: string
+          libelle_ald: string | null
+        }
+        Insert: {
+          annee?: number | null
+          code_ald: number
+          code_departement: string
+          created_at?: string
+          effectif?: number | null
+          id?: string
+          libelle_ald?: string | null
+        }
+        Update: {
+          annee?: number | null
+          code_ald?: number
+          code_departement?: string
+          created_at?: string
+          effectif?: number | null
+          id?: string
+          libelle_ald?: string | null
+        }
+        Relationships: []
+      }
       certification_has: {
         Row: {
+          annee_visite: number | null
+          code_demarche: number | null
           created_at: string
           date_decision: string | null
           date_visite: string | null
+          decision: string | null
           finess_geo: string
+          finess_juridique: string | null
           id: string
-          niveau: string | null
-          recommandations: number | null
-          reserves: number | null
-          reserves_majeures: number | null
+          nom_etablissement: string | null
+          score_equipes: number | null
+          score_etablissement: number | null
+          score_patient: number | null
+          site_principal: boolean | null
         }
         Insert: {
+          annee_visite?: number | null
+          code_demarche?: number | null
           created_at?: string
           date_decision?: string | null
           date_visite?: string | null
+          decision?: string | null
           finess_geo: string
+          finess_juridique?: string | null
           id?: string
-          niveau?: string | null
-          recommandations?: number | null
-          reserves?: number | null
-          reserves_majeures?: number | null
+          nom_etablissement?: string | null
+          score_equipes?: number | null
+          score_etablissement?: number | null
+          score_patient?: number | null
+          site_principal?: boolean | null
         }
         Update: {
+          annee_visite?: number | null
+          code_demarche?: number | null
           created_at?: string
           date_decision?: string | null
           date_visite?: string | null
+          decision?: string | null
           finess_geo?: string
+          finess_juridique?: string | null
           id?: string
-          niveau?: string | null
-          recommandations?: number | null
-          reserves?: number | null
-          reserves_majeures?: number | null
+          nom_etablissement?: string | null
+          score_equipes?: number | null
+          score_etablissement?: number | null
+          score_patient?: number | null
+          site_principal?: boolean | null
         }
         Relationships: []
       }
