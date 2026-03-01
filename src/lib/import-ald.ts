@@ -65,9 +65,9 @@ export async function importAldNational(
 
   // Find ALD code + libelle columns
   const sampleRow = rows[0] || {};
-  const codeCol = findCol(sampleRow, "ALD", "Code ALD", "code_ald", "Numéro ALD", "N° ALD", "ald");
-  const libelleCol = findCol(sampleRow, "Libellé ALD", "Libellé", "libelle_ald", "Libellé de l'ALD", "libelle", "Pathologie");
-  const prevalenceCol = findCol(sampleRow, "Prévalence", "prevalence", "Taux");
+  const codeCol = findCol(sampleRow, "ALD", "Code ALD", "code_ald", "Numéro ALD", "N° ALD", "ald", "Code");
+  const libelleCol = findCol(sampleRow, "Libellé ALD", "Libellé", "libelle_ald", "Libellé de l'ALD", "libelle", "Pathologie", "Libellé de l\u2019ALD");
+  const prevalenceCol = findCol(sampleRow, "Prévalence", "prevalence", "Taux", "Prévalence pour 100 000");
 
   if (!codeCol) {
     // Log headers for debugging
