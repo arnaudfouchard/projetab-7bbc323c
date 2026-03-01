@@ -161,69 +161,82 @@ export default function DataSources() {
         </Button>
       </div>
 
-      {/* Summary cards */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold">{MOCK_DATA_SOURCES.length}</p>
-            <p className="text-xs text-muted-foreground">Sources</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold">{MOCK_DATA_SOURCES.reduce((s, d) => s + d.recordCount, 0).toLocaleString("fr-FR")}</p>
-            <p className="text-xs text-muted-foreground">Enregistrements</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-green-600">{MOCK_DATA_SOURCES.filter((d) => d.status === "ok").length}</p>
-            <p className="text-xs text-muted-foreground">À jour</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-yellow-600">{MOCK_DATA_SOURCES.filter((d) => d.status === "stale").length}</p>
-            <p className="text-xs text-muted-foreground">À actualiser</p>
-          </CardContent>
-        </Card>
-      </div>
+      <Tabs defaultValue="overview">
+        <TabsList className="mb-6">
+          <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+          <TabsTrigger value="ingestion">Indexation Pinecone</TabsTrigger>
+        </TabsList>
 
-      {/* Table */}
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Source</TableHead>
-              <TableHead>Format</TableHead>
-              <TableHead>Date des données</TableHead>
-              <TableHead>Dernière MAJ</TableHead>
-              <TableHead className="text-right">Enregistrements</TableHead>
-              <TableHead>Statut</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {MOCK_DATA_SOURCES.map((ds) => (
-              <TableRow key={ds.id}>
-                <TableCell>
-                  <div>
-                    <p className="font-medium text-sm">{ds.name}</p>
-                    <p className="text-xs text-muted-foreground">{ds.description}</p>
-                    <p className="mt-0.5 text-xs text-accent">{ds.source}</p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="text-xs font-mono">{ds.format}</Badge>
-                </TableCell>
-                <TableCell className="text-sm">{ds.dataDate}</TableCell>
-                <TableCell className="text-sm">{ds.lastUpdate}</TableCell>
-                <TableCell className="text-right text-sm font-medium">{ds.recordCount.toLocaleString("fr-FR")}</TableCell>
-                <TableCell><StatusDot status={ds.status} /></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Summary cards */}
+          <div className="grid gap-4 sm:grid-cols-4">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold">{MOCK_DATA_SOURCES.length}</p>
+                <p className="text-xs text-muted-foreground">Sources</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold">{MOCK_DATA_SOURCES.reduce((s, d) => s + d.recordCount, 0).toLocaleString("fr-FR")}</p>
+                <p className="text-xs text-muted-foreground">Enregistrements</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold text-green-600">{MOCK_DATA_SOURCES.filter((d) => d.status === "ok").length}</p>
+                <p className="text-xs text-muted-foreground">À jour</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold text-yellow-600">{MOCK_DATA_SOURCES.filter((d) => d.status === "stale").length}</p>
+                <p className="text-xs text-muted-foreground">À actualiser</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Table */}
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Format</TableHead>
+                  <TableHead>Date des données</TableHead>
+                  <TableHead>Dernière MAJ</TableHead>
+                  <TableHead className="text-right">Enregistrements</TableHead>
+                  <TableHead>Statut</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {MOCK_DATA_SOURCES.map((ds) => (
+                  <TableRow key={ds.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-sm">{ds.name}</p>
+                        <p className="text-xs text-muted-foreground">{ds.description}</p>
+                        <p className="mt-0.5 text-xs text-accent">{ds.source}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs font-mono">{ds.format}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">{ds.dataDate}</TableCell>
+                    <TableCell className="text-sm">{ds.lastUpdate}</TableCell>
+                    <TableCell className="text-right text-sm font-medium">{ds.recordCount.toLocaleString("fr-FR")}</TableCell>
+                    <TableCell><StatusDot status={ds.status} /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ingestion">
+          <IngestionPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
