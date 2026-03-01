@@ -58,7 +58,9 @@ Deno.serve(async (req) => {
     const lines = csvText.split("\n");
     const rawHeaders = lines[0].split(";").map((h) => h.trim().replace(/"/g, "").toLowerCase());
     console.log(`CSV: ${lines.length} lines, ${rawHeaders.length} columns`);
-    console.log("Headers:", rawHeaders.slice(0, 15).join(", "));
+    console.log("First line raw:", lines[0].substring(0, 500));
+    console.log("Second line raw:", lines[1]?.substring(0, 500));
+    console.log("Headers:", rawHeaders.slice(0, 20).join(" | "));
 
     const col = (name: string) => {
       // Try exact match first, then partial
