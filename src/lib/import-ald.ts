@@ -10,11 +10,30 @@ async function fetchAndParse(url: string): Promise<{ headers: string[]; rows: Re
   const wb = XLSX.read(ab, { type: "array" });
 
   // Try all sheets, pick the one with the most data
+  // Also try skipping title rows (range) to find the real header
   let bestRows: Record<string, any>[] = [];
   for (const name of wb.SheetNames) {
     const ws = wb.Sheets[name];
-    const json: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
-    if (json.length > bestRows.length) bestRows = json;
+
+    // Try with different header row offsets (0 = default, then skip 1..6 rows)
+    for (let skip = 0; skip <= 6; skip++) {
+      const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+      range.s.r = skip; // start from row `skip`
+      const json: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, {
+        defval: "",
+        range,
+      });
+      if (json.length === 0) continue;
+
+      const keys = Object.keys(json[0]);
+      const emptyCount = keys.filter((k) => /^__EMPTY/.test(k) || k.trim() === "").length;
+      const meaningfulRatio = 1 - emptyCount / keys.length;
+
+      // Accept if most columns have meaningful names (>50%)
+      if (meaningfulRatio > 0.5 && json.length > bestRows.length) {
+        bestRows = json;
+      }
+    }
   }
 
   const headers = bestRows.length > 0 ? Object.keys(bestRows[0]) : [];
