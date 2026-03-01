@@ -8,20 +8,6 @@ const corsHeaders = {
 
 const PINECONE_HOST = "https://projetabpepms-2wbvkah.svc.aped-4627-b74a.pinecone.io";
 
-/**
- * Pipeline d'ingestion de documents dans Pinecone.
- * 
- * Fonctionnement :
- * 1. Le client extrait le texte des documents (PDF via pdf.js, DOCX via mammoth)
- * 2. Le client envoie le texte brut + métadonnées à cette edge function
- * 3. L'edge function découpe le texte en chunks de ~500 tokens avec overlap
- * 4. Chaque chunk est envoyé à Pinecone Inference pour embedding (multilingual-e5-large)
- * 5. Les vecteurs + métadonnées sont upsertés dans l'index Pinecone
- * 
- * Le chunking utilise un découpage par paragraphes avec fenêtre glissante
- * pour conserver le contexte entre les morceaux.
- */
-
 // --- Chunking logic ---
 function chunkText(text: string, maxChars = 1500, overlap = 200): string[] {
   const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 20);
@@ -31,7 +17,6 @@ function chunkText(text: string, maxChars = 1500, overlap = 200): string[] {
   for (const para of paragraphs) {
     if ((current + "\n\n" + para).length > maxChars && current.length > 0) {
       chunks.push(current.trim());
-      // Keep overlap from end of current chunk
       const words = current.split(/\s+/);
       const overlapWords = words.slice(-Math.floor(overlap / 5));
       current = overlapWords.join(" ") + "\n\n" + para;
@@ -43,7 +28,6 @@ function chunkText(text: string, maxChars = 1500, overlap = 200): string[] {
     chunks.push(current.trim());
   }
 
-  // If no paragraph splits worked, chunk by character count
   if (chunks.length === 0 && text.length > 0) {
     for (let i = 0; i < text.length; i += maxChars - overlap) {
       chunks.push(text.slice(i, i + maxChars).trim());
@@ -53,9 +37,32 @@ function chunkText(text: string, maxChars = 1500, overlap = 200): string[] {
   return chunks;
 }
 
+// --- Check existing vectors in Pinecone (dedup) ---
+async function checkExistingIds(ids: string[], apiKey: string): Promise<Set<string>> {
+  const existing = new Set<string>();
+  // Fetch in batches of 100 (Pinecone limit)
+  const BATCH = 100;
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const batch = ids.slice(i, i + BATCH);
+    const params = batch.map(id => `ids=${encodeURIComponent(id)}`).join("&");
+    const res = await fetch(`${PINECONE_HOST}/vectors/fetch?${params}`, {
+      headers: { "Api-Key": apiKey },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.vectors) {
+        for (const id of Object.keys(data.vectors)) {
+          existing.add(id);
+        }
+      }
+    }
+  }
+  return existing;
+}
+
 // --- Batch embed via Pinecone Inference ---
 async function embedTexts(texts: string[], apiKey: string): Promise<number[][]> {
-  const BATCH_SIZE = 96; // Pinecone limit
+  const BATCH_SIZE = 96;
   const allEmbeddings: number[][] = [];
 
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
@@ -130,7 +137,7 @@ serve(async (req) => {
       );
     }
 
-    const { documents } = await req.json();
+    const { documents, skipExisting = true } = await req.json();
 
     if (!documents || !Array.isArray(documents) || documents.length === 0) {
       return new Response(
@@ -160,13 +167,25 @@ serve(async (req) => {
       try {
         // 1. Chunk the text
         const chunks = chunkText(text);
+        const docId = name.replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase();
+
+        // 2. Dedup check — see if first chunk already exists
+        if (skipExisting) {
+          const checkIds = [`${docId}_chunk_0`];
+          const existing = await checkExistingIds(checkIds, PINECONE_API_KEY);
+          if (existing.size > 0) {
+            console.log(`Document "${name}" already indexed (${docId}_chunk_0 exists), skipping`);
+            results.push({ name, chunks: 0, status: "skipped_duplicate" });
+            continue;
+          }
+        }
+
         console.log(`Document "${name}": ${chunks.length} chunks`);
 
-        // 2. Generate embeddings
+        // 3. Generate embeddings
         const embeddings = await embedTexts(chunks, PINECONE_API_KEY);
 
-        // 3. Build vectors with metadata
-        const docId = name.replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase();
+        // 4. Build vectors with metadata
         const vectors = chunks.map((chunk, i) => ({
           id: `${docId}_chunk_${i}`,
           values: embeddings[i],
@@ -180,7 +199,7 @@ serve(async (req) => {
           },
         }));
 
-        // 4. Upsert to Pinecone
+        // 5. Upsert to Pinecone
         await upsertVectors(vectors, PINECONE_API_KEY);
 
         results.push({ name, chunks: chunks.length, status: "indexed" });
@@ -192,10 +211,11 @@ serve(async (req) => {
 
     const totalChunks = results.reduce((s, r) => s + r.chunks, 0);
     const indexed = results.filter(r => r.status === "indexed").length;
+    const skippedDup = results.filter(r => r.status === "skipped_duplicate").length;
 
     return new Response(
       JSON.stringify({
-        message: `${indexed}/${documents.length} documents indexés, ${totalChunks} chunks créés`,
+        message: `${indexed}/${documents.length} documents indexés, ${totalChunks} chunks créés, ${skippedDup} doublons ignorés`,
         results,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
