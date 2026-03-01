@@ -34,6 +34,9 @@ const IMPORTABLE: Record<string, string> = {
   insee: "import-population",
 };
 
+// ALD sources that use client-side import from bundled files
+const ALD_SOURCES = ["ald", "ald_national"];
+
 function StatusDot({ status }: { status: string }) {
   const colors: Record<string, string> = {
     ok: "bg-green-500",
