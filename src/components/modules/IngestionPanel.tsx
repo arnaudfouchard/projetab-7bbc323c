@@ -55,7 +55,7 @@ interface GitHubFile {
 }
 
 const TYPE_DOCUMENT_OPTIONS = ["PE", "PM", "PMS", "CPOM", "Autre"];
-const TYPE_ETAB_OPTIONS = ["CHR/U", "CH", "ESPIC", "Privé", "EHPAD", "GHT", "Autre"];
+const TYPE_ETAB_OPTIONS = ["CHR/U", "CH", "CHS/psy", "SMR", "ESPIC", "Privé", "GHT", "Autre"];
 const SUPPORTED_EXTENSIONS = ["pdf", "docx", "pptx", "txt", "md"];
 
 const DEFAULT_REPO = "arthur-lmusic/pe_pms";
@@ -141,7 +141,8 @@ function autoDetect(name: string) {
   if (yearMatch) meta.annee = yearMatch[1];
 
   if (upper.includes("CHU") || upper.includes("CHR")) meta.type_etablissement = "CHR/U";
-  else if (upper.includes("EHPAD")) meta.type_etablissement = "EHPAD";
+  else if (upper.includes("CHS") || upper.includes("PSY")) meta.type_etablissement = "CHS/psy";
+  else if (upper.includes("SMR") || upper.includes("SSR")) meta.type_etablissement = "SMR";
   else if (upper.match(/\bCH[\s_-]/)) meta.type_etablissement = "CH";
 
   // Try to extract establishment name from path/filename
