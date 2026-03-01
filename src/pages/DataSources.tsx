@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Database, RefreshCw, Play, Loader2 } from "lucide-react";
+import { importAldNational, importAldDepartement } from "@/lib/import-ald";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,9 @@ const IMPORTABLE: Record<string, string> = {
   certification_has: "import-has-certification",
   insee: "import-population",
 };
+
+// ALD sources that use client-side import from bundled files
+const ALD_SOURCES = ["ald", "ald_national"];
 
 function StatusDot({ status }: { status: string }) {
   const colors: Record<string, string> = {
@@ -67,6 +71,26 @@ export default function DataSources() {
   });
 
   const runImport = async (sourceId: string) => {
+    // Client-side ALD import
+    if (sourceId === "ald" || sourceId === "ald_national") {
+      setImporting(sourceId);
+      try {
+        toast.info(`Import ALD lancé…`);
+        const importFn = sourceId === "ald" ? importAldDepartement : importAldNational;
+        const result = await importFn((msg) => console.log(`[ALD] ${msg}`));
+        toast.success(`Import terminé : ${result.imported} enregistrements (${result.errors} erreurs)`);
+        if (result.errors > 0) {
+          console.warn("Colonnes détectées:", result.headers);
+        }
+        refetch();
+      } catch (err: any) {
+        toast.error(`Erreur import ALD : ${err.message}`);
+      } finally {
+        setImporting(null);
+      }
+      return;
+    }
+
     const funcName = IMPORTABLE[sourceId];
     if (!funcName) return;
     setImporting(sourceId);
@@ -179,7 +203,7 @@ export default function DataSources() {
                       <TableCell className="text-right text-sm font-medium">{(ds.record_count || 0).toLocaleString("fr-FR")}</TableCell>
                       <TableCell><StatusDot status={ds.status} /></TableCell>
                       <TableCell>
-                        {IMPORTABLE[ds.id] && (
+                        {(IMPORTABLE[ds.id] || ALD_SOURCES.includes(ds.id)) && (
                           <Button
                             variant="outline"
                             size="sm"
