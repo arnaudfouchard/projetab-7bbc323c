@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PINECONE_HOST = "https://projetab-embeddings-2wbvkah.svc.aped-4627-b74a.pinecone.io";
+const PINECONE_HOST = "https://projetabpepms-2wbvkah.svc.aped-4627-b74a.pinecone.io";
 
 /**
  * Pipeline d'ingestion de documents dans Pinecone.
