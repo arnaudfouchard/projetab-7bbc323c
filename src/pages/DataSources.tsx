@@ -39,6 +39,9 @@ const IMPORTABLE: Record<string, string> = {
 // ALD sources that use client-side import from bundled files
 const ALD_SOURCES = ["ald", "ald_national"];
 
+// Client-side importable sources (bundled files)
+const CLIENT_IMPORTABLE = ["ald", "ald_national", "ght", "hpr"];
+
 function StatusDot({ status }: { status: string }) {
   const colors: Record<string, string> = {
     ok: "bg-green-500",
