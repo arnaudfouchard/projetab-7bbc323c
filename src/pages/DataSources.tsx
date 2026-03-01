@@ -9,6 +9,7 @@ import {
   Table, TableHeader, TableBody, TableHead, TableRow, TableCell,
 } from "@/components/ui/table";
 import { IngestionPanel } from "@/components/modules/IngestionPanel";
+import { XlsxImportPanel } from "@/components/modules/XlsxImportPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -108,6 +109,7 @@ export default function DataSources() {
       <Tabs defaultValue="overview">
         <TabsList className="mb-6">
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+          <TabsTrigger value="xlsx">Import XLSX</TabsTrigger>
           <TabsTrigger value="ingestion">Indexation Pinecone</TabsTrigger>
         </TabsList>
 
@@ -198,6 +200,10 @@ export default function DataSources() {
               </Table>
             )}
           </Card>
+        </TabsContent>
+
+        <TabsContent value="xlsx">
+          <XlsxImportPanel onImportDone={() => refetch()} />
         </TabsContent>
 
         <TabsContent value="ingestion">
