@@ -143,7 +143,10 @@ export function XlsxImportPanel({ onImportDone }: { onImportDone?: () => void })
 
     // Auto-detect profile
     const hdrLower = hdrs.map((h) => h.toLowerCase());
-    if (hdrLower.some((h) => h.includes("ght"))) {
+    const nameLower = f.name.toLowerCase();
+    if (nameLower.includes("hpr") || nameLower.includes("proximité") || nameLower.includes("proximite")) {
+      setSelectedProfile(hprProfile);
+    } else if (hdrLower.some((h) => h.includes("ght")) || nameLower.includes("ght")) {
       setSelectedProfile(ghtProfile);
     } else if (hdrLower.some((h) => h.includes("finess"))) {
       setSelectedProfile(finessRapprochementProfile);
