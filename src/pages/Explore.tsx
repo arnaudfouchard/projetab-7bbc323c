@@ -1,14 +1,21 @@
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, MapPin, TrendingUp, Activity, GitMerge,
   Target, CalendarDays, Search, FolderOpen, AlertTriangle, Check,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MODULES, EXPLORATION_ONLY_MODULES } from "@/lib/constants";
 import type { ModuleId } from "@/lib/types";
+import { ModuleDiagnosticTerritorial } from "@/components/modules/ModuleDiagnosticTerritorial";
+import { ModuleDiagnosticFinancier } from "@/components/modules/ModuleDiagnosticFinancier";
+import { ModuleDiagnosticOffreSoins } from "@/components/modules/ModuleDiagnosticOffreSoins";
+import { ModuleFusionRegroupement } from "@/components/modules/ModuleFusionRegroupement";
+import { ModuleAxesStrategiques } from "@/components/modules/ModuleAxesStrategiques";
+import { ModuleFichesActions } from "@/components/modules/ModuleFichesActions";
+import { ModuleRechercheDocumentaire } from "@/components/modules/ModuleRechercheDocumentaire";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   MapPin, TrendingUp, Activity, GitMerge, Target, CalendarDays, Search, FolderOpen,
@@ -16,8 +23,20 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 const allModules = [...MODULES, ...EXPLORATION_ONLY_MODULES];
 
+const moduleComponents: Record<ModuleId, React.ComponentType> = {
+  diagnostic_territorial: ModuleDiagnosticTerritorial,
+  diagnostic_financier: ModuleDiagnosticFinancier,
+  diagnostic_offre_soins: ModuleDiagnosticOffreSoins,
+  fusion_regroupement: ModuleFusionRegroupement,
+  analyse_axes_strategiques: ModuleAxesStrategiques,
+  fiches_actions_gantt: ModuleFichesActions,
+  recherche_documentaire: ModuleRechercheDocumentaire,
+  explorer_base: ModuleRechercheDocumentaire,
+};
+
 export default function Explore() {
   const navigate = useNavigate();
+  const { module } = useParams();
   const [selected, setSelected] = useState<ModuleId | null>(null);
 
   const handleExplore = () => {
@@ -29,6 +48,44 @@ export default function Explore() {
     }
   };
 
+  // Module view (/explore/:module)
+  if (module) {
+    const moduleId = (module === "base" ? "explorer_base" : module) as ModuleId;
+    const moduleDef = allModules.find((m) => m.id === moduleId);
+    const ModuleContent = moduleComponents[moduleId];
+
+    if (!moduleDef || !ModuleContent) {
+      return (
+        <div className="container max-w-4xl py-10">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/explore")} className="mb-6 text-muted-foreground">
+            <ArrowLeft className="mr-1 h-4 w-4" /> Retour aux modules
+          </Button>
+          <Card>
+            <CardContent className="py-10 text-center text-muted-foreground">
+              Module introuvable.
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    return (
+      <div className="container max-w-6xl py-10">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/explore")} className="mb-6 text-muted-foreground">
+          <ArrowLeft className="mr-1 h-4 w-4" /> Retour aux modules
+        </Button>
+
+        <div className="mb-8 animate-fade-in">
+          <h1 className="font-display text-2xl font-bold">{moduleDef.label}</h1>
+          <p className="mt-1 text-muted-foreground">Mode exploration</p>
+        </div>
+
+        <ModuleContent />
+      </div>
+    );
+  }
+
+  // Module selector (/explore)
   return (
     <div className="container max-w-3xl py-10">
       <Button
@@ -97,3 +154,4 @@ export default function Explore() {
     </div>
   );
 }
+
