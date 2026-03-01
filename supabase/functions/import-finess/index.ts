@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const typeFilter: string[] | undefined = body.type_etab_filter;
-    const limit = body.limit || 2000;
+    const limit = body.limit || 50000;
 
     // Get CSV resource URL from data.gouv.fr API
     console.log("Fetching FINESS dataset metadata…");

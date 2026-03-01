@@ -333,7 +333,7 @@ export function XlsxImportPanel({ onImportDone }: { onImportDone?: () => void })
             <div className="flex flex-wrap gap-2">
               {PROFILES.map((p) => (
                 <Button
-                  key={p.table}
+                  key={p.dataSourceId}
                   size="sm"
                   variant={selectedProfile === p ? "default" : "outline"}
                   onClick={() => setSelectedProfile(p)}
