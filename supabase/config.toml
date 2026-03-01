@@ -14,3 +14,12 @@ verify_jwt = false
 
 [functions.ingest-documents]
 verify_jwt = false
+
+[functions.import-finess]
+verify_jwt = false
+
+[functions.import-has-certification]
+verify_jwt = false
+
+[functions.import-population]
+verify_jwt = false
