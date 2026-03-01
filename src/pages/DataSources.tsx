@@ -202,6 +202,10 @@ export default function DataSources() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="xlsx">
+          <XlsxImportPanel onImportDone={() => refetch()} />
+        </TabsContent>
+
         <TabsContent value="ingestion">
           <IngestionPanel />
         </TabsContent>
