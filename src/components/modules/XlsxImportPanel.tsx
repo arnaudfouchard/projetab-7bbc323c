@@ -216,6 +216,10 @@ export function XlsxImportPanel({ onImportDone }: { onImportDone?: () => void })
     const nameLower = f.name.toLowerCase();
     if (nameLower.includes("hpr") || nameLower.includes("proximité") || nameLower.includes("proximite")) {
       setSelectedProfile(hprProfile);
+    } else if (nameLower.includes("ald") && nameLower.includes("departement")) {
+      setSelectedProfile(aldDepartementProfile);
+    } else if (nameLower.includes("ald")) {
+      setSelectedProfile(aldNationalProfile);
     } else if (hdrLower.some((h) => h.includes("ght")) || nameLower.includes("ght")) {
       setSelectedProfile(ghtProfile);
     } else if (hdrLower.some((h) => h.includes("finess"))) {
