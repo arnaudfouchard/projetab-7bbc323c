@@ -88,7 +88,31 @@ const finessRapprochementProfile: ImportProfile = {
   },
 };
 
-const PROFILES: ImportProfile[] = [ghtProfile, finessRapprochementProfile];
+// ── HPR (Hôpitaux de Proximité) profile ──────────────────────────
+const hprProfile: ImportProfile = {
+  label: "Hôpitaux de proximité (HPR)",
+  table: "etablissements",
+  dataSourceId: "hpr",
+  conflictColumn: "finess_geo",
+  mapRow: (row) => {
+    const finess_geo = row["N° FINESS ET"] || row["FINESS ET"] || row["finess_geo"] || row["FINESS_GEO"] || row["N° FINESS"] || row["FINESS"] || "";
+    if (!finess_geo) return null;
+
+    const nom = row["Raison sociale ET"] || row["Raison sociale"] || row["RS"] || row["Nom"] || null;
+
+    const record: Record<string, any> = {
+      finess_geo: String(finess_geo).trim(),
+      is_hopital_proximite: true,
+    };
+
+    if (nom) record.nom = String(nom).trim();
+    else record.nom = "Inconnu";
+
+    return record;
+  },
+};
+
+const PROFILES: ImportProfile[] = [ghtProfile, finessRapprochementProfile, hprProfile];
 
 export function XlsxImportPanel({ onImportDone }: { onImportDone?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
