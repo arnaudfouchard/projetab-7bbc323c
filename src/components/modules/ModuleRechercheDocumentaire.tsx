@@ -57,7 +57,7 @@ const EMPTY_FILTERS: Filters = {
 };
 
 const TYPE_DOCUMENT_OPTIONS = ["PE", "PM", "PMS", "CPOM", "Autre"];
-const TYPE_ETAB_OPTIONS = ["CHR/U", "CH", "ESPIC", "Privé", "EHPAD", "GHT", "Autre"];
+const TYPE_ETAB_OPTIONS = ["CHR/U", "CH", "CHS/psy", "SMR", "ESPIC", "Privé", "GHT", "Autre"];
 
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
