@@ -112,7 +112,77 @@ const hprProfile: ImportProfile = {
   },
 };
 
-const PROFILES: ImportProfile[] = [ghtProfile, finessRapprochementProfile, hprProfile];
+// ── ALD national profile ─────────────────────────────────────────
+const aldNationalProfile: ImportProfile = {
+  label: "ALD nationales (série annuelle)",
+  table: "ald_national",
+  dataSourceId: "ald_national",
+  conflictColumn: "code_ald,annee",
+  mapRow: (row) => {
+    // XLS files often have varying column names — try many variants
+    const codeAld = parseInt(row["ALD"] || row["Code ALD"] || row["code_ald"] || row["Numéro ALD"] || "");
+    if (isNaN(codeAld)) return null;
+
+    const libelle = row["Libellé ALD"] || row["Libellé"] || row["libelle_ald"] || row["Libellé de l'ALD"] || null;
+
+    // The file likely has one row per ALD with columns for each year
+    // We need to pivot: detect year columns
+    const records: Record<string, any>[] = [];
+    for (const [key, val] of Object.entries(row)) {
+      const yearMatch = key.match(/^(20\d{2})$/);
+      if (yearMatch) {
+        const effectif = parseInt(String(val).replace(/\s/g, "")) || null;
+        if (effectif) {
+          records.push({
+            code_ald: codeAld,
+            libelle_ald: libelle ? String(libelle).trim() : null,
+            annee: parseInt(yearMatch[1]),
+            effectif,
+          });
+        }
+      }
+    }
+
+    // If no year columns found, try simple format
+    if (records.length === 0) {
+      const annee = parseInt(row["Année"] || row["annee"] || row["Annee"] || "");
+      const effectif = parseInt(String(row["Effectif"] || row["effectif"] || row["Nombre"] || "").replace(/\s/g, "")) || null;
+      if (!isNaN(annee) && effectif) {
+        return { code_ald: codeAld, libelle_ald: libelle ? String(libelle).trim() : null, annee, effectif };
+      }
+      return null;
+    }
+
+    return records;
+  },
+};
+
+// ── ALD département profile ──────────────────────────────────────
+const aldDepartementProfile: ImportProfile = {
+  label: "ALD par département (série annuelle)",
+  table: "ald_departement",
+  dataSourceId: "ald",
+  conflictColumn: "code_departement,code_ald",
+  mapRow: (row) => {
+    const codeAld = parseInt(row["ALD"] || row["Code ALD"] || row["code_ald"] || row["Numéro ALD"] || "");
+    const codeDep = row["Département"] || row["Code département"] || row["code_departement"] || row["Dept"] || "";
+    if (isNaN(codeAld) || !codeDep) return null;
+
+    const libelle = row["Libellé ALD"] || row["Libellé"] || row["libelle_ald"] || row["Libellé de l'ALD"] || null;
+    const effectif = parseInt(String(row["Effectif"] || row["effectif"] || row["Nombre"] || row["Prévalence"] || "").replace(/\s/g, "")) || null;
+    const annee = parseInt(row["Année"] || row["annee"] || row["Annee"] || "2024") || 2024;
+
+    return {
+      code_departement: String(codeDep).trim().padStart(2, "0"),
+      code_ald: codeAld,
+      libelle_ald: libelle ? String(libelle).trim() : null,
+      annee,
+      effectif,
+    };
+  },
+};
+
+const PROFILES: ImportProfile[] = [ghtProfile, finessRapprochementProfile, hprProfile, aldNationalProfile, aldDepartementProfile];
 
 export function XlsxImportPanel({ onImportDone }: { onImportDone?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
@@ -146,6 +216,10 @@ export function XlsxImportPanel({ onImportDone }: { onImportDone?: () => void })
     const nameLower = f.name.toLowerCase();
     if (nameLower.includes("hpr") || nameLower.includes("proximité") || nameLower.includes("proximite")) {
       setSelectedProfile(hprProfile);
+    } else if (nameLower.includes("ald") && nameLower.includes("departement")) {
+      setSelectedProfile(aldDepartementProfile);
+    } else if (nameLower.includes("ald")) {
+      setSelectedProfile(aldNationalProfile);
     } else if (hdrLower.some((h) => h.includes("ght")) || nameLower.includes("ght")) {
       setSelectedProfile(ghtProfile);
     } else if (hdrLower.some((h) => h.includes("finess"))) {
@@ -164,9 +238,12 @@ export function XlsxImportPanel({ onImportDone }: { onImportDone?: () => void })
       const ws = wb.Sheets[wb.SheetNames[0]];
       const json: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
-      const mapped = json
+      const rawMapped = json
         .map((row) => selectedProfile.mapRow(row, headers))
-        .filter(Boolean) as Record<string, any>[];
+        .filter(Boolean);
+
+      // Flatten in case mapRow returns arrays (pivot case like ALD national)
+      const mapped = rawMapped.flatMap((r) => (Array.isArray(r) ? r : [r])) as Record<string, any>[];
 
       if (mapped.length === 0) {
         toast.error("Aucun enregistrement valide trouvé");

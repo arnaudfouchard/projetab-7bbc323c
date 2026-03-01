@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ald_national: {
+        Row: {
+          annee: number
+          code_ald: number
+          created_at: string
+          effectif: number | null
+          id: string
+          libelle_ald: string | null
+          prevalence: number | null
+        }
+        Insert: {
+          annee: number
+          code_ald: number
+          created_at?: string
+          effectif?: number | null
+          id?: string
+          libelle_ald?: string | null
+          prevalence?: number | null
+        }
+        Update: {
+          annee?: number
+          code_ald?: number
+          created_at?: string
+          effectif?: number | null
+          id?: string
+          libelle_ald?: string | null
+          prevalence?: number | null
+        }
+        Relationships: []
+      }
       certification_has: {
         Row: {
           annee_visite: number | null
