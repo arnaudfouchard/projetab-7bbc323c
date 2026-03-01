@@ -109,6 +109,7 @@ export default function DataSources() {
       <Tabs defaultValue="overview">
         <TabsList className="mb-6">
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+          <TabsTrigger value="xlsx">Import XLSX</TabsTrigger>
           <TabsTrigger value="ingestion">Indexation Pinecone</TabsTrigger>
         </TabsList>
 
