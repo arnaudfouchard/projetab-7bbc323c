@@ -9,6 +9,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import type { EntityType, Etablissement } from "@/lib/types";
 
+// Only show relevant sanitaire categories (exclude SSIAD, CPH, CPFSE, etc.)
+const EXCLUDED_CATEGORIES = [
+  "Service de Soins Infirmiers A Domicile (S.S.I.A.D)",
+  "Centre Provisoire Hébergement (C.P.H.)",
+  "Centre Placement Familial Socio-Educatif (C.P.F.S.E.)",
+  "Centre d'Accueil Familial Spécialisé",
+  "Centre de santé sexuelle",
+  "Centre de Vaccination BCG",
+  "Dispensaire Antituberculeux",
+  "Atelier Thérapeutique",
+];
+
 function useSearchEtablissements(query: string, entityType: EntityType | null) {
   return useQuery({
     queryKey: ["search-etablissements", query, entityType],
@@ -22,7 +34,6 @@ function useSearchEtablissements(query: string, entityType: EntityType | null) {
           .or(`ght_nom.ilike.%${query}%,ght_code.ilike.%${query}%,region.ilike.%${query}%`)
           .limit(15);
         if (error) throw error;
-        // Map to Etablissement-like shape for UI consistency
         return (data || []).map((g) => ({
           finess_geo: g.ght_code,
           nom: g.ght_nom,
@@ -33,11 +44,17 @@ function useSearchEtablissements(query: string, entityType: EntityType | null) {
         })) as Etablissement[];
       }
 
-      const { data, error } = await supabase
+      let req = supabase
         .from("etablissements")
         .select("finess_geo, finess_juridique, nom, type_etab, categorie_libelle, commune, departement, region, statut_juridique")
-        .or(`nom.ilike.%${query}%,finess_geo.ilike.%${query}%,commune.ilike.%${query}%,code_postal.ilike.%${query}%`)
-        .limit(15);
+        .or(`nom.ilike.%${query}%,finess_geo.ilike.%${query}%,commune.ilike.%${query}%,code_postal.ilike.%${query}%`);
+
+      // Exclude non-sanitaire categories
+      for (const cat of EXCLUDED_CATEGORIES) {
+        req = req.neq("categorie_libelle", cat);
+      }
+
+      const { data, error } = await req.limit(15);
       if (error) throw error;
       return (data || []) as Etablissement[];
     },
