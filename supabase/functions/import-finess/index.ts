@@ -5,9 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// FINESS open data CSV from data.gouv.fr (géolocalisation file — main file with all establishments)
-const FINESS_CSV_URL =
-  "https://www.data.gouv.fr/fr/datasets/r/2ce43ade-8d2c-4d1d-81da-571c12c1f5a8";
+// data.gouv.fr dataset ID for FINESS
+const FINESS_DATASET_ID = "finess-extraction-du-fichier-des-etablissements";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -20,37 +19,70 @@ Deno.serve(async (req) => {
     const sb = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json().catch(() => ({}));
-    const typeFilter = body.type_etab_filter; // optional: ["CHR/U", "CH", "CHS/psy", ...]
-    const limit = body.limit || 500;
+    const typeFilter: string[] | undefined = body.type_etab_filter;
+    const limit = body.limit || 2000;
 
-    // Fetch CSV
-    console.log("Fetching FINESS CSV…");
-    const res = await fetch(FINESS_CSV_URL);
-    if (!res.ok) throw new Error(`FINESS download failed: ${res.status}`);
+    // Step 1: Get CSV resource URL from data.gouv.fr API
+    console.log("Fetching FINESS dataset metadata from data.gouv.fr API…");
+    const apiRes = await fetch(
+      `https://www.data.gouv.fr/api/1/datasets/${FINESS_DATASET_ID}/`
+    );
+    if (!apiRes.ok) throw new Error(`data.gouv.fr API failed: ${apiRes.status}`);
+    const dataset = await apiRes.json();
+
+    // Find the CSV resource for geolocalisation (the one with "geolocalisation" or the largest CSV)
+    const csvResources = (dataset.resources || []).filter(
+      (r: any) => r.format?.toLowerCase() === "csv" && r.type === "main"
+    );
+
+    if (csvResources.length === 0) {
+      throw new Error("No CSV resource found in FINESS dataset");
+    }
+
+    // Pick the geo file preferably, or the first CSV
+    const geoResource =
+      csvResources.find((r: any) =>
+        r.title?.toLowerCase().includes("geolocalisation") ||
+        r.url?.toLowerCase().includes("geolocalisation")
+      ) || csvResources[0];
+
+    const csvUrl = geoResource.url;
+    console.log(`Downloading CSV from: ${csvUrl}`);
+
+    // Step 2: Fetch CSV
+    const res = await fetch(csvUrl);
+    if (!res.ok) throw new Error(`FINESS CSV download failed: ${res.status}`);
     const csvText = await res.text();
 
     // Parse CSV (semicolon-separated)
     const lines = csvText.split("\n");
-    const headers = lines[0].split(";").map((h) => h.trim().replace(/"/g, ""));
-    console.log(`CSV: ${lines.length} lines, ${headers.length} columns`);
+    const rawHeaders = lines[0].split(";").map((h) => h.trim().replace(/"/g, "").toLowerCase());
+    console.log(`CSV: ${lines.length} lines, ${rawHeaders.length} columns`);
+    console.log("Headers:", rawHeaders.slice(0, 15).join(", "));
 
-    // Map columns — FINESS géolocalisation columns
-    const col = (name: string) => headers.indexOf(name);
+    const col = (name: string) => {
+      // Try exact match first, then partial
+      let idx = rawHeaders.indexOf(name);
+      if (idx >= 0) return idx;
+      idx = rawHeaders.findIndex((h) => h.includes(name));
+      return idx;
+    };
+
     const getVal = (row: string[], colName: string) => {
       const idx = col(colName);
-      return idx >= 0 ? row[idx]?.replace(/"/g, "").trim() || null : null;
+      return idx >= 0 ? row[idx]?.replace(/^"|"$/g, "").trim() || null : null;
     };
 
     const records: any[] = [];
     for (let i = 1; i < lines.length && records.length < limit; i++) {
-      const row = lines[i].split(";").map((c) => c.trim());
+      const row = lines[i].split(";").map((c) => c.replace(/^"|"$/g, "").trim());
       if (row.length < 5) continue;
 
       const finess_geo = getVal(row, "nofinesset") || getVal(row, "nofiness");
       if (!finess_geo) continue;
 
       const catCode = getVal(row, "categetab") || getVal(row, "categorie");
-      
+
       // Determine type_etab from category code
       let type_etab = "Autre";
       if (catCode) {
@@ -74,7 +106,7 @@ Deno.serve(async (req) => {
         categorie_code: catCode,
         categorie_libelle: getVal(row, "libcategetab") || getVal(row, "libcategorie"),
         commune: getVal(row, "libcommune") || getVal(row, "commune"),
-        code_commune: getVal(row, "commune") || getVal(row, "codepostal"),
+        code_commune: getVal(row, "commune"),
         departement: getVal(row, "libdepartement"),
         code_departement: getVal(row, "departement") || getVal(row, "numdepartement"),
         region: null as string | null,
@@ -93,32 +125,36 @@ Deno.serve(async (req) => {
     console.log(`Parsed ${records.length} establishment records`);
 
     // Upsert in batches
-    let inserted = 0;
-    let updated = 0;
     const BATCH = 200;
+    let errors = 0;
     for (let i = 0; i < records.length; i += BATCH) {
       const batch = records.slice(i, i + BATCH);
-      const { error, count } = await sb
+      const { error } = await sb
         .from("etablissements")
-        .upsert(batch, { onConflict: "finess_geo", ignoreDuplicates: false })
-        .select("id");
+        .upsert(batch, { onConflict: "finess_geo", ignoreDuplicates: false });
 
       if (error) {
-        console.error(`Batch ${i / BATCH} error:`, error.message);
-      } else {
-        inserted += batch.length;
+        console.error(`Batch ${Math.floor(i / BATCH)} error:`, error.message);
+        errors++;
       }
     }
 
     // Update data_sources meta
     await sb.from("data_sources").update({
       record_count: records.length,
-      status: "ok",
+      status: errors === 0 ? "ok" : "stale",
       last_update: new Date().toISOString(),
+      data_date: geoResource.last_modified?.substring(0, 7) || new Date().toISOString().substring(0, 7),
     }).eq("id", "finess");
 
     return new Response(
-      JSON.stringify({ success: true, imported: records.length }),
+      JSON.stringify({
+        success: true,
+        imported: records.length,
+        errors,
+        csv_url: csvUrl,
+        csv_resource_title: geoResource.title,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: any) {
