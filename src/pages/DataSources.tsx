@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Database, RefreshCw, FileSpreadsheet, Globe, HardDrive } from "lucide-react";
+import { ArrowLeft, Database, RefreshCw, Play, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,7 @@ import { IngestionPanel } from "@/components/modules/IngestionPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface DataSource {
   id: string;
@@ -24,6 +26,12 @@ interface DataSource {
   record_count: number;
   status: string;
 }
+
+const IMPORTABLE: Record<string, string> = {
+  finess: "import-finess",
+  certification_has: "import-has-certification",
+  insee: "import-population",
+};
 
 function StatusDot({ status }: { status: string }) {
   const colors: Record<string, string> = {
@@ -43,6 +51,7 @@ function StatusDot({ status }: { status: string }) {
 
 export default function DataSources() {
   const navigate = useNavigate();
+  const [importing, setImporting] = useState<string | null>(null);
 
   const { data: sources = [], isLoading, refetch } = useQuery({
     queryKey: ["data-sources"],
@@ -55,6 +64,25 @@ export default function DataSources() {
       return data as DataSource[];
     },
   });
+
+  const runImport = async (sourceId: string) => {
+    const funcName = IMPORTABLE[sourceId];
+    if (!funcName) return;
+    setImporting(sourceId);
+    try {
+      toast.info(`Import ${sourceId} lancé…`);
+      const { data, error } = await supabase.functions.invoke(funcName, {
+        body: {},
+      });
+      if (error) throw error;
+      toast.success(`Import terminé : ${data?.imported ?? 0} enregistrements`);
+      refetch();
+    } catch (err: any) {
+      toast.error(`Erreur import : ${err.message}`);
+    } finally {
+      setImporting(null);
+    }
+  };
 
   return (
     <div className="container max-w-6xl py-10">
@@ -128,6 +156,7 @@ export default function DataSources() {
                     <TableHead>Dernière MAJ</TableHead>
                     <TableHead className="text-right">Enregistrements</TableHead>
                     <TableHead>Statut</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -147,6 +176,22 @@ export default function DataSources() {
                       <TableCell className="text-sm">{ds.last_update ? new Date(ds.last_update).toLocaleDateString("fr-FR") : "—"}</TableCell>
                       <TableCell className="text-right text-sm font-medium">{(ds.record_count || 0).toLocaleString("fr-FR")}</TableCell>
                       <TableCell><StatusDot status={ds.status} /></TableCell>
+                      <TableCell>
+                        {IMPORTABLE[ds.id] && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={importing !== null}
+                            onClick={() => runImport(ds.id)}
+                          >
+                            {importing === ds.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Play className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
