@@ -9,6 +9,7 @@ import {
   Table, TableHeader, TableBody, TableHead, TableRow, TableCell,
 } from "@/components/ui/table";
 import { IngestionPanel } from "@/components/modules/IngestionPanel";
+import { XlsxImportPanel } from "@/components/modules/XlsxImportPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
