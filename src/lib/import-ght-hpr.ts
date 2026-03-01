@@ -111,8 +111,8 @@ export async function importHpr(
   onProgress?.(`${rows.length} lignes, colonnes: ${headers.join(", ")}`);
 
   const sample = rows[0] || {};
-  const finessCol = findCol(sample, "N° FINESS ET", "FINESS ET", "finess_geo", "FINESS_GEO", "N° FINESS", "FINESS", "Finess ET", "Finess");
-  const nomCol = findCol(sample, "Raison sociale ET", "Raison sociale", "RS", "Nom", "Raison Sociale");
+  const finessCol = findCol(sample, "FI_ET", "N° FINESS ET", "FINESS ET", "finess_geo", "FINESS_GEO", "N° FINESS", "FINESS", "Finess ET", "Finess");
+  const nomCol = findCol(sample, "RS_ET", "Raison sociale ET", "Raison sociale", "RS", "Nom", "Raison Sociale");
 
   if (!finessCol) throw new Error(`Colonne FINESS introuvable. Colonnes: ${headers.join(", ")}`);
 
