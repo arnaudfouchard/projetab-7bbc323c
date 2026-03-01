@@ -1,12 +1,50 @@
 import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Building2, Users, Search, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Building2, Users, Search, ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ENTITY_TYPES } from "@/lib/constants";
-import { MOCK_ETABLISSEMENTS } from "@/lib/mock-data";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import type { EntityType, Etablissement } from "@/lib/types";
+
+function useSearchEtablissements(query: string, entityType: EntityType | null) {
+  return useQuery({
+    queryKey: ["search-etablissements", query, entityType],
+    queryFn: async () => {
+      if (!entityType || !query.trim() || query.trim().length < 2) return [];
+
+      if (entityType === "ght") {
+        const { data, error } = await supabase
+          .from("ghts")
+          .select("ght_code, ght_nom, region, nb_membres")
+          .or(`ght_nom.ilike.%${query}%,ght_code.ilike.%${query}%,region.ilike.%${query}%`)
+          .limit(15);
+        if (error) throw error;
+        // Map to Etablissement-like shape for UI consistency
+        return (data || []).map((g) => ({
+          finess_geo: g.ght_code,
+          nom: g.ght_nom,
+          commune: `${g.nb_membres || 0} membres`,
+          departement: "",
+          region: g.region || "",
+          type_etab: "GHT",
+        })) as Etablissement[];
+      }
+
+      const { data, error } = await supabase
+        .from("etablissements")
+        .select("finess_geo, finess_juridique, nom, type_etab, categorie_libelle, commune, departement, region, statut_juridique")
+        .or(`nom.ilike.%${query}%,finess_geo.ilike.%${query}%,commune.ilike.%${query}%,code_postal.ilike.%${query}%`)
+        .limit(15);
+      if (error) throw error;
+      return (data || []) as Etablissement[];
+    },
+    enabled: !!entityType && query.trim().length >= 2,
+    staleTime: 30_000,
+  });
+}
 
 export default function SelectEntity() {
   const navigate = useNavigate();
@@ -17,16 +55,7 @@ export default function SelectEntity() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Etablissement | null>(null);
 
-  const results = useMemo(() => {
-    if (!entityType || !query.trim()) return [];
-    const q = query.toLowerCase();
-    return MOCK_ETABLISSEMENTS.filter(
-      (e) =>
-        e.nom.toLowerCase().includes(q) ||
-        e.finess_geo.includes(q) ||
-        (e.commune && e.commune.toLowerCase().includes(q))
-    ).slice(0, 15);
-  }, [entityType, query]);
+  const { data: results = [], isLoading } = useSearchEtablissements(query, entityType);
 
   const entityIcons = { etablissement: Building2, ght: Users };
 
@@ -94,15 +123,22 @@ export default function SelectEntity() {
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Rechercher par nom, FINESS ou ville…"
+              placeholder="Rechercher par nom, FINESS, ville ou code postal…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-10"
             />
           </div>
 
+          {/* Loading */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-6 text-muted-foreground">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Recherche…
+            </div>
+          )}
+
           {/* Results */}
-          {results.length > 0 && (
+          {!isLoading && results.length > 0 && (
             <div className="mb-6 max-h-[400px] space-y-1 overflow-y-auto rounded-lg border bg-card p-2">
               {results.map((etab) => {
                 const isSelected = selected?.finess_geo === etab.finess_geo;
@@ -129,9 +165,15 @@ export default function SelectEntity() {
             </div>
           )}
 
-          {query.trim().length > 0 && results.length === 0 && (
+          {!isLoading && query.trim().length >= 2 && results.length === 0 && (
             <p className="py-6 text-center text-sm text-muted-foreground">
               Aucun résultat pour « {query} »
+            </p>
+          )}
+
+          {query.trim().length > 0 && query.trim().length < 2 && (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Tapez au moins 2 caractères…
             </p>
           )}
 
