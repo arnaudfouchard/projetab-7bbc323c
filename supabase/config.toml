@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.doc-synthesis]
 verify_jwt = false
+
+[functions.ingest-documents]
+verify_jwt = false
