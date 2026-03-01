@@ -57,6 +57,7 @@ interface GitHubFile {
 const TYPE_DOCUMENT_OPTIONS = ["PE", "PM", "PMS", "CPOM", "Autre"];
 const TYPE_ETAB_OPTIONS = ["CHR/U", "CH", "CHS/psy", "SMR", "ESPIC", "Privé", "GHT", "Autre"];
 const SUPPORTED_EXTENSIONS = ["pdf", "docx", "pptx", "txt", "md"];
+const MAX_DOCUMENTS = 20;
 
 const DEFAULT_REPO = "arthur-lmusic/pe_pms";
 
@@ -185,8 +186,18 @@ export function IngestionPanel() {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
+    const remaining = MAX_DOCUMENTS - documents.length;
+    if (remaining <= 0) {
+      toast.error(`Limite atteinte : ${MAX_DOCUMENTS} documents maximum par session`);
+      e.target.value = "";
+      return;
+    }
+    const selected = Array.from(files).slice(0, remaining);
+    if (selected.length < files.length) {
+      toast.warning(`Seuls ${selected.length} fichier(s) ajouté(s) (limite de ${MAX_DOCUMENTS})`);
+    }
     const newDocs: PendingDocument[] = [];
-    for (const file of Array.from(files)) {
+    for (const file of selected) {
       const doc: PendingDocument = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         file,
@@ -328,11 +339,28 @@ export function IngestionPanel() {
   };
 
   const toggleFileSelection = (path: string) => {
-    setGhFiles(prev => prev.map(f => f.path === path ? { ...f, selected: !f.selected } : f));
+    setGhFiles(prev => {
+      const file = prev.find(f => f.path === path);
+      if (file && !file.selected) {
+        const currentSelected = prev.filter(f => f.selected).length;
+        if (currentSelected >= MAX_DOCUMENTS) {
+          toast.error(`Limite de ${MAX_DOCUMENTS} documents atteinte`);
+          return prev;
+        }
+      }
+      return prev.map(f => f.path === path ? { ...f, selected: !f.selected } : f);
+    });
   };
 
   const selectAll = (selected: boolean) => {
-    setGhFiles(prev => prev.map(f => ({ ...f, selected })));
+    if (selected) {
+      setGhFiles(prev => prev.map((f, i) => ({ ...f, selected: i < MAX_DOCUMENTS })));
+      if (ghFiles.length > MAX_DOCUMENTS) {
+        toast.warning(`Sélection limitée aux ${MAX_DOCUMENTS} premiers fichiers`);
+      }
+    } else {
+      setGhFiles(prev => prev.map(f => ({ ...f, selected: false })));
+    }
   };
 
   const startGitHubExtraction = async () => {
@@ -496,7 +524,7 @@ export function IngestionPanel() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">
-                  {ghFiles.length} fichier(s) trouvé(s) — {selectedCount} sélectionné(s)
+                  {ghFiles.length} fichier(s) trouvé(s) — {selectedCount}/{MAX_DOCUMENTS} sélectionné(s)
                 </CardTitle>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => selectAll(true)}>Tout sélectionner</Button>
