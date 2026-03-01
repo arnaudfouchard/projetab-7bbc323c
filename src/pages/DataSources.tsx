@@ -71,6 +71,26 @@ export default function DataSources() {
   });
 
   const runImport = async (sourceId: string) => {
+    // Client-side ALD import
+    if (sourceId === "ald" || sourceId === "ald_national") {
+      setImporting(sourceId);
+      try {
+        toast.info(`Import ALD lancé…`);
+        const importFn = sourceId === "ald" ? importAldDepartement : importAldNational;
+        const result = await importFn((msg) => console.log(`[ALD] ${msg}`));
+        toast.success(`Import terminé : ${result.imported} enregistrements (${result.errors} erreurs)`);
+        if (result.errors > 0) {
+          console.warn("Colonnes détectées:", result.headers);
+        }
+        refetch();
+      } catch (err: any) {
+        toast.error(`Erreur import ALD : ${err.message}`);
+      } finally {
+        setImporting(null);
+      }
+      return;
+    }
+
     const funcName = IMPORTABLE[sourceId];
     if (!funcName) return;
     setImporting(sourceId);
