@@ -123,9 +123,10 @@ Deno.serve(async (req) => {
       const finess_geo = row[1] || null;
       if (!finess_geo) continue;
 
-      // Find category code — scan for a 3-digit number that could be category
+      // Categorize — returns null for non-sanitaire (EHPAD, SSIAD, etc.)
       const catCode = row[18] || null;
       const type_etab = categorize(catCode);
+      if (!type_etab) continue; // skip médico-social
 
       if (typeFilter && typeFilter.length > 0 && !typeFilter.includes(type_etab)) continue;
 
