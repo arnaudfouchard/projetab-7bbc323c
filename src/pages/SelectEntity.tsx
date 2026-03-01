@@ -67,6 +67,7 @@ export default function SelectEntity() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const mode = params.get("mode") || "project";
+  const explorationModule = params.get("module");
 
   const [entityType, setEntityType] = useState<EntityType | null>(null);
   const [query, setQuery] = useState("");
@@ -224,11 +225,17 @@ export default function SelectEntity() {
         </Button>
         <Button
           disabled={!selected}
-          onClick={() =>
-            navigate(
-              `/projects/select-modules?mode=${mode}&finess=${selected?.finess_geo}&name=${encodeURIComponent(selected?.nom || "")}&entity=${entityType}`
-            )
-          }
+          onClick={() => {
+            if (mode === "exploration" && explorationModule) {
+              navigate(
+                `/explore/${explorationModule}?finess=${selected?.finess_geo}&name=${encodeURIComponent(selected?.nom || "")}`
+              );
+            } else {
+              navigate(
+                `/projects/select-modules?mode=${mode}&finess=${selected?.finess_geo}&name=${encodeURIComponent(selected?.nom || "")}&entity=${entityType}`
+              );
+            }
+          }}
         >
           Continuer <ArrowRight className="ml-1 h-4 w-4" />
         </Button>

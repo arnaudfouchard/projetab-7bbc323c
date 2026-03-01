@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, MapPin, TrendingUp, Activity, GitMerge,
   Target, CalendarDays, Search, FolderOpen, AlertTriangle, Check,
@@ -41,12 +41,12 @@ export default function Explore() {
 
   const handleExplore = () => {
     if (!selected) return;
-    if (selected === "explorer_base") {
-      navigate("/explore/base");
-    } else {
-      navigate(`/explore/${selected}`);
-    }
+    navigate(`/projects/select-entity?mode=exploration&module=${selected}`);
   };
+
+  const [searchParams] = useSearchParams();
+  const finess = searchParams.get("finess");
+  const entityName = searchParams.get("name");
 
   // Module view (/explore/:module)
   if (module) {
@@ -69,6 +69,12 @@ export default function Explore() {
       );
     }
 
+    // Redirect to entity selection if no finess provided
+    if (!finess) {
+      navigate(`/projects/select-entity?mode=exploration&module=${moduleId}`, { replace: true });
+      return null;
+    }
+
     return (
       <div className="container max-w-6xl py-10">
         <Button variant="ghost" size="sm" onClick={() => navigate("/explore")} className="mb-6 text-muted-foreground">
@@ -77,6 +83,9 @@ export default function Explore() {
 
         <div className="mb-8 animate-fade-in">
           <h1 className="font-display text-2xl font-bold">{moduleDef.label}</h1>
+          {entityName && (
+            <p className="mt-1 text-sm font-medium text-accent">{entityName} — FINESS {finess}</p>
+          )}
           <p className="mt-1 text-muted-foreground">Mode exploration</p>
         </div>
 
