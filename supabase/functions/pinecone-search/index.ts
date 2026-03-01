@@ -49,6 +49,7 @@ serve(async (req) => {
         headers: {
           "Api-Key": PINECONE_API_KEY,
           "Content-Type": "application/json",
+          "X-Pinecone-API-Version": "2025-04",
         },
         body: JSON.stringify({
           model: "multilingual-e5-large",
