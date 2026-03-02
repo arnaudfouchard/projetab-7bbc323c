@@ -1,15 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Building2, Users, Search, ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ENTITY_TYPES } from "@/lib/constants";
+import { ENTITY_TYPES, MODULES } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type { EntityType, Etablissement } from "@/lib/types";
 
-// Only show relevant sanitaire categories (exclude SSIAD, CPH, CPFSE, etc.)
 const EXCLUDED_CATEGORIES = [
   "Service de Soins Infirmiers A Domicile (S.S.I.A.D)",
   "Centre Provisoire Hébergement (C.P.H.)",
@@ -49,7 +50,6 @@ function useSearchEtablissements(query: string, entityType: EntityType | null) {
         .select("finess_geo, finess_juridique, nom, type_etab, categorie_libelle, commune, departement, region, statut_juridique")
         .or(`nom.ilike.%${query}%,finess_geo.ilike.%${query}%,commune.ilike.%${query}%,code_postal.ilike.%${query}%`);
 
-      // Exclude non-sanitaire categories
       for (const cat of EXCLUDED_CATEGORIES) {
         req = req.neq("categorie_libelle", cat);
       }
@@ -67,15 +67,59 @@ export default function SelectEntity() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const mode = params.get("mode") || "project";
-  const explorationModule = params.get("module");
+  const isProject = mode === "project";
 
   const [entityType, setEntityType] = useState<EntityType | null>(null);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Etablissement | null>(null);
+  const [projectName, setProjectName] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const { data: results = [], isLoading } = useSearchEtablissements(query, entityType);
 
   const entityIcons = { etablissement: Building2, ght: Users };
+
+  const canContinue = isProject
+    ? !!selected && projectName.trim().length > 0
+    : !!selected;
+
+  const handleContinue = async () => {
+    if (!selected) return;
+
+    if (isProject) {
+      // Create project in DB with ALL modules, then navigate to workspace
+      setCreating(true);
+      try {
+        const allModuleIds = MODULES.map((m) => m.id);
+        const { data, error } = await supabase
+          .from("projects")
+          .insert({
+            name: projectName.trim(),
+            entity_type: entityType || "etablissement",
+            finess: selected.finess_geo,
+            region: selected.region || null,
+            department: selected.departement || null,
+            modules: allModuleIds,
+            type: entityType === "ght" ? "GHT" : "Établissement",
+            status: "draft",
+            is_exploration: false,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        navigate(`/projects/${data.id}`);
+      } catch (err: any) {
+        toast.error("Erreur lors de la création du projet : " + err.message);
+      } finally {
+        setCreating(false);
+      }
+    } else {
+      // Exploration mode → go to module selection
+      navigate(
+        `/explore?finess=${selected.finess_geo}&name=${encodeURIComponent(selected.nom)}&entity=${entityType}`
+      );
+    }
+  };
 
   return (
     <div className="container max-w-3xl py-10">
@@ -90,7 +134,7 @@ export default function SelectEntity() {
 
       <div className="mb-8 animate-fade-in">
         <h1 className="font-display text-2xl font-bold">
-          {mode === "exploration" ? "Mode exploration" : "Nouveau projet"}
+          {isProject ? "Nouveau projet" : "Mode exploration"}
         </h1>
         <p className="mt-1 text-muted-foreground">
           Sélectionnez le type d'entité puis recherchez votre établissement
@@ -148,14 +192,12 @@ export default function SelectEntity() {
             />
           </div>
 
-          {/* Loading */}
           {isLoading && (
             <div className="flex items-center justify-center py-6 text-muted-foreground">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Recherche…
             </div>
           )}
 
-          {/* Results */}
           {!isLoading && results.length > 0 && (
             <div className="mb-6 max-h-[400px] space-y-1 overflow-y-auto rounded-lg border bg-card p-2">
               {results.map((etab) => {
@@ -215,6 +257,19 @@ export default function SelectEntity() {
               </CardContent>
             </Card>
           )}
+
+          {/* Project name (project mode only) */}
+          {isProject && selected && (
+            <div className="mb-6 animate-fade-in space-y-2">
+              <Label htmlFor="project-name">Nom du projet</Label>
+              <Input
+                id="project-name"
+                placeholder="Ex : Projet Médical 2026-2030"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -224,20 +279,12 @@ export default function SelectEntity() {
           Annuler
         </Button>
         <Button
-          disabled={!selected}
-          onClick={() => {
-            if (mode === "exploration" && explorationModule) {
-              navigate(
-                `/explore/${explorationModule}?finess=${selected?.finess_geo}&name=${encodeURIComponent(selected?.nom || "")}`
-              );
-            } else {
-              navigate(
-                `/projects/select-modules?mode=${mode}&finess=${selected?.finess_geo}&name=${encodeURIComponent(selected?.nom || "")}&entity=${entityType}`
-              );
-            }
-          }}
+          disabled={!canContinue || creating}
+          onClick={handleContinue}
         >
-          Continuer <ArrowRight className="ml-1 h-4 w-4" />
+          {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isProject ? "Créer le projet" : "Continuer"}
+          {!creating && <ArrowRight className="ml-1 h-4 w-4" />}
         </Button>
       </div>
     </div>
