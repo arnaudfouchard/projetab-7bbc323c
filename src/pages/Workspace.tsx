@@ -68,7 +68,7 @@ export default function Workspace() {
         .from("etablissements")
         .select("*")
         .eq("finess_geo", finess!)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
