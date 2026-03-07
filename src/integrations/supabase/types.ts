@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      import_history: {
+        Row: {
+          id: string
+          source_id: string
+          version_label: string
+          file_hash: string | null
+          record_count: number | null
+          records_inserted: number | null
+          records_updated: number | null
+          records_deleted: number | null
+          orphan_keys_detected: number | null
+          audit_report: Json | null
+          started_at: string | null
+          completed_at: string | null
+          status: string | null
+        }
+        Insert: {
+          id?: string
+          source_id: string
+          version_label: string
+          file_hash?: string | null
+          record_count?: number | null
+          records_inserted?: number | null
+          records_updated?: number | null
+          records_deleted?: number | null
+          orphan_keys_detected?: number | null
+          audit_report?: Json | null
+          started_at?: string | null
+          completed_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          id?: string
+          source_id?: string
+          version_label?: string
+          file_hash?: string | null
+          record_count?: number | null
+          records_inserted?: number | null
+          records_updated?: number | null
+          records_deleted?: number | null
+          orphan_keys_detected?: number | null
+          audit_report?: Json | null
+          started_at?: string | null
+          completed_at?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      linkage_overrides: {
+        Row: {
+          id: string
+          source_table: string
+          source_key: string
+          target_table: string
+          original_value: string | null
+          corrected_value: string | null
+          reason: string | null
+          created_by: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          source_table: string
+          source_key: string
+          target_table: string
+          original_value?: string | null
+          corrected_value?: string | null
+          reason?: string | null
+          created_by?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          source_table?: string
+          source_key?: string
+          target_table?: string
+          original_value?: string | null
+          corrected_value?: string | null
+          reason?: string | null
+          created_by?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       ald_departement: {
         Row: {
           annee: number | null
@@ -579,7 +663,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      audit_data_linkages: {
+        Args: Record<string, never>
+        Returns: Json
+      }
+      audit_orphan_details: {
+        Args: { p_table: string; p_limit?: number }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

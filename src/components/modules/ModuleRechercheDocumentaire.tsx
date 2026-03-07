@@ -63,7 +63,7 @@ const TYPE_ETAB_OPTIONS = ["CHR/U", "CH", "CHS/psy", "SMR", "ESPIC", "Privé", "
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
 
-export function ModuleRechercheDocumentaire() {
+export function ModuleRechercheDocumentaire(_props: { finessGeo?: string; codeDepartement?: string }) {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Filters>({ ...EMPTY_FILTERS });
   const [showFilters, setShowFilters] = useState(false);

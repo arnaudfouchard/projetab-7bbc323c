@@ -11,7 +11,7 @@ const MOCK_AXES = [
   { axe: "Développement durable", mentions: 18, sous_axes: ["Transition écologique", "Responsabilité sociétale"] },
 ];
 
-export function ModuleAxesStrategiques() {
+export function ModuleAxesStrategiques(_props: { finessGeo?: string; codeDepartement?: string }) {
   return (
     <div className="space-y-6">
       <Card>

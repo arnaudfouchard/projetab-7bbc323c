@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
+import { logImportRun } from "@/lib/import-history";
 
 const BATCH = 200;
 
@@ -100,6 +101,13 @@ export async function importGht(
     { onConflict: "id" }
   );
 
+  await logImportRun({
+    sourceId: "ght",
+    versionLabel: "2024",
+    recordCount: records.length,
+    errors,
+  });
+
   return { imported: records.length, errors, headers };
 }
 
@@ -147,6 +155,13 @@ export async function importHpr(
     { id: "hpr", name: "Hôpitaux de proximité", description: "Liste des hôpitaux de proximité", record_count: updated, status: errors === 0 ? "ok" : "stale", last_update: new Date().toISOString(), format: "XLSX", source: "DGOS" } as any,
     { onConflict: "id" }
   );
+
+  await logImportRun({
+    sourceId: "hpr",
+    versionLabel: "2024",
+    recordCount: updated,
+    errors,
+  });
 
   return { imported: updated, errors, headers };
 }

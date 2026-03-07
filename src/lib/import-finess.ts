@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logImportRun } from "@/lib/import-history";
 
 const BATCH = 200;
 
@@ -82,6 +83,13 @@ export async function importFiness(
     } as any,
     { onConflict: "id" }
   );
+
+  await logImportRun({
+    sourceId: "finess",
+    versionLabel: new Date().getFullYear().toString(),
+    recordCount: records.length,
+    errors,
+  });
 
   return { imported: records.length, errors, headers: ["finess_geo", "nom", "type_etab", "commune", "departement"] };
 }

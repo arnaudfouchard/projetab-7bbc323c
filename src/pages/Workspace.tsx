@@ -28,7 +28,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   MapPin, TrendingUp, Activity, GitMerge, Target, CalendarDays, Search,
 };
 
-const moduleComponents: Record<ModuleId, React.ComponentType> = {
+const moduleComponents: Record<ModuleId, React.ComponentType<{ finessGeo?: string; codeDepartement?: string }>> = {
   diagnostic_territorial: ModuleDiagnosticTerritorial,
   diagnostic_financier: ModuleDiagnosticFinancier,
   diagnostic_offre_soins: ModuleDiagnosticOffreSoins,
@@ -234,7 +234,7 @@ export default function Workspace() {
                 const ModuleContent = moduleComponents[mod.id];
                 return (
                   <TabsContent key={mod.id} value={mod.id} className="mt-0">
-                    {ModuleContent ? <ModuleContent /> : null}
+                    {ModuleContent ? <ModuleContent finessGeo={finess || undefined} codeDepartement={identity?.code_departement || undefined} /> : null}
                   </TabsContent>
                 );
               })}

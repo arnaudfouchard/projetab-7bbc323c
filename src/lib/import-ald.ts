@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
+import { logImportRun } from "@/lib/import-history";
 
 const BATCH = 200;
 
@@ -143,6 +144,13 @@ export async function importAldNational(
     { onConflict: "id" }
   );
 
+  await logImportRun({
+    sourceId: "ald_national",
+    versionLabel: yearCols.length > 0 ? yearCols[yearCols.length - 1] : "2024",
+    recordCount: records.length,
+    errors,
+  });
+
   return { imported: records.length, errors, headers };
 }
 
@@ -249,6 +257,13 @@ async function insertAldDept(
     } as any,
     { onConflict: "id" }
   );
+
+  await logImportRun({
+    sourceId: "ald",
+    versionLabel: "2024",
+    recordCount: records.length,
+    errors,
+  });
 
   return { imported: records.length, errors, headers };
 }

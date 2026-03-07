@@ -47,7 +47,7 @@ const statutConfig = {
   termine: { label: "Terminé", icon: CheckCircle2, color: "default" as const },
 };
 
-export function ModuleFichesActions() {
+export function ModuleFichesActions(_props: { finessGeo?: string; codeDepartement?: string }) {
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-3">

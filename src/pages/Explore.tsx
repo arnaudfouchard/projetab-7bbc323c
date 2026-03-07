@@ -30,7 +30,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 const allModules = [...MODULES, ...EXPLORATION_ONLY_MODULES];
 
-const moduleComponents: Record<ModuleId, React.ComponentType> = {
+const moduleComponents: Record<ModuleId, React.ComponentType<{ finessGeo?: string; codeDepartement?: string }>> = {
   diagnostic_territorial: ModuleDiagnosticTerritorial,
   diagnostic_financier: ModuleDiagnosticFinancier,
   diagnostic_offre_soins: ModuleDiagnosticOffreSoins,
@@ -132,7 +132,7 @@ export default function Explore() {
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value={moduleId} className="mt-0">
-                  <ModuleContent />
+                  <ModuleContent finessGeo={finess || undefined} codeDepartement={identity?.code_departement || undefined} />
                 </TabsContent>
               </Tabs>
             </main>

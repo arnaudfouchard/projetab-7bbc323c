@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   TrendingUp, TrendingDown, Upload, FileSpreadsheet, X,
-  ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight, CheckCircle2,
 } from "lucide-react";
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import * as XLSX from "xlsx";
+import { toast } from "sonner";
 
 const MOCK_CHARGES = {
   titre1: {
@@ -160,17 +162,47 @@ function TitreSection({
   );
 }
 
-export function ModuleDiagnosticFinancier() {
+interface EprdParsed {
+  sheetNames: string[];
+  rowCount: number;
+  sampleHeaders: string[];
+}
+
+export function ModuleDiagnosticFinancier(_props: { finessGeo?: string; codeDepartement?: string }) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [eprdParsed, setEprdParsed] = useState<EprdParsed | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const d = MOCK_KPI;
 
   const totalCharges = Object.values(MOCK_CHARGES).reduce((s, t) => s + t.total, 0);
   const totalProduits = Object.values(MOCK_PRODUITS).reduce((s, t) => s + t.total, 0);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setUploadedFile(file);
+    if (!file) return;
+    setUploadedFile(file);
+    setEprdParsed(null);
+
+    try {
+      const ab = await file.arrayBuffer();
+      const wb = XLSX.read(ab, { type: "array" });
+      const sheetNames = wb.SheetNames;
+
+      // Parse first sheet to get a sample
+      const ws = wb.Sheets[sheetNames[0]];
+      const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      const sampleHeaders = rows.length > 0 ? Object.keys(rows[0]).slice(0, 8) : [];
+
+      setEprdParsed({
+        sheetNames,
+        rowCount: rows.length,
+        sampleHeaders,
+      });
+
+      toast.success(`EPRD charge : ${sheetNames.length} onglet(s), ${rows.length} lignes`);
+    } catch (err: any) {
+      toast.error(`Erreur lecture EPRD : ${err.message}`);
+    }
   };
 
   return (
@@ -200,6 +232,7 @@ export function ModuleDiagnosticFinancier() {
                   className="h-7 w-7"
                   onClick={() => {
                     setUploadedFile(null);
+                    setEprdParsed(null);
                     if (fileInputRef.current) fileInputRef.current.value = "";
                   }}
                 >
@@ -226,6 +259,32 @@ export function ModuleDiagnosticFinancier() {
           </div>
         </CardContent>
       </Card>
+
+      {/* EPRD parsed info */}
+      {eprdParsed && (
+        <Card className="border-emerald-200 bg-emerald-50/50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <span className="text-sm font-medium text-emerald-800">EPRD charge avec succes</span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3 text-xs text-emerald-700">
+              <div>
+                <span className="font-medium">Onglets :</span>{" "}
+                {eprdParsed.sheetNames.join(", ")}
+              </div>
+              <div>
+                <span className="font-medium">Lignes :</span>{" "}
+                {eprdParsed.rowCount.toLocaleString("fr-FR")}
+              </div>
+              <div>
+                <span className="font-medium">Colonnes :</span>{" "}
+                {eprdParsed.sampleHeaders.join(", ")}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPI cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

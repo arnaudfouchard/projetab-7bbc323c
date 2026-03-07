@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 
-export function ModuleFusionRegroupement() {
+export function ModuleFusionRegroupement(_props: { finessGeo?: string; codeDepartement?: string }) {
   return (
     <div className="space-y-6">
       <Card className="border-dashed">
