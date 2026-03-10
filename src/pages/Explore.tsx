@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MODULES, EXPLORATION_ONLY_MODULES } from "@/lib/constants";
 import type { ModuleId } from "@/lib/types";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
 import { ModuleDiagnosticTerritorial } from "@/components/modules/ModuleDiagnosticTerritorial";
@@ -58,15 +58,7 @@ export default function Explore() {
   // Fetch identity card for the sidebar
   const { data: identity } = useQuery({
     queryKey: ["etablissement", finess],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("etablissements")
-        .select("*")
-        .eq("finess_geo", finess!)
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => api.get(`/etablissements/${finess}`),
     enabled: !!finess,
   });
 

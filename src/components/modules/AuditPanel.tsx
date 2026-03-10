@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -135,54 +135,28 @@ export function AuditPanel() {
   // Fetch audit via RPC directly (no edge function needed for basic audit)
   const { data: auditData, isLoading: auditLoading } = useQuery({
     queryKey: ["audit-linkages"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("audit_data_linkages");
-      if (error) throw error;
-      return data as unknown as AuditResult;
-    },
+    queryFn: () => api.get<AuditResult>("/audit"),
   });
 
   // Fetch import history
   const { data: importHistory = [] } = useQuery({
     queryKey: ["import-history"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("import_history")
-        .select("*")
-        .order("started_at", { ascending: false })
-        .limit(20);
-      if (error) throw error;
-      return data as ImportHistoryRow[];
-    },
+    queryFn: () => api.get<ImportHistoryRow[]>("/import-history"),
   });
 
   // Fetch linkage overrides count
   const { data: overridesCount = 0 } = useQuery({
     queryKey: ["linkage-overrides-count"],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from("linkage_overrides")
-        .select("*", { count: "exact", head: true });
-      if (error) throw error;
-      return count || 0;
+      const data = await api.get<{ count: number }>("/linkage-overrides/count");
+      return data.count || 0;
     },
   });
 
   // Refresh audit
   const refreshAudit = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.rpc("audit_data_linkages");
-      if (error) throw error;
-
-      // Log this audit run
-      await supabase.from("import_history").insert({
-        source_id: "_audit",
-        version_label: new Date().toISOString().slice(0, 10),
-        audit_report: data as any,
-        status: "success",
-        completed_at: new Date().toISOString(),
-      } as any);
-
+      const data = await api.post("/audit/run");
       return data;
     },
     onSuccess: () => {

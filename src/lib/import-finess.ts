@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { logImportRun } from "@/lib/import-history";
 
 const BATCH = 200;
@@ -60,29 +60,29 @@ export async function importFiness(
   let errors = 0;
   for (let i = 0; i < records.length; i += BATCH) {
     const batch = records.slice(i, i + BATCH);
-    const { error } = await supabase
-      .from("etablissements")
-      .upsert(batch as any, { onConflict: "finess_geo", ignoreDuplicates: false });
-    if (error) {
+    try {
+      await api.post("/upsert", {
+        table: "etablissements",
+        rows: batch,
+        conflictColumn: "finess_geo",
+      });
+    } catch (error: any) {
       console.error(`Batch ${Math.floor(i / BATCH)} error:`, error.message);
       errors++;
     }
   }
 
   // Update data_sources meta
-  await supabase.from("data_sources").upsert(
-    {
-      id: "finess",
-      name: "FINESS (sanitaire)",
-      description: "Répertoire FINESS — périmètre sanitaire",
-      record_count: records.length,
-      status: errors === 0 ? "ok" : "stale",
-      last_update: new Date().toISOString(),
-      format: "CSV",
-      source: "data.gouv.fr (fichier local)",
-    } as any,
-    { onConflict: "id" }
-  );
+  await api.post("/data-sources/upsert", {
+    id: "finess",
+    name: "FINESS (sanitaire)",
+    description: "Répertoire FINESS — périmètre sanitaire",
+    record_count: records.length,
+    status: errors === 0 ? "ok" : "stale",
+    last_update: new Date().toISOString(),
+    format: "CSV",
+    source: "data.gouv.fr (fichier local)",
+  });
 
   await logImportRun({
     sourceId: "finess",

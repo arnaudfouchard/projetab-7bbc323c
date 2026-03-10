@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: projetab
+      POSTGRES_USER: projetab
+      POSTGRES_PASSWORD: projetab
+    ports:
+      - "5433:5432"  # 5433 on host to avoid conflicts
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "4001:4001"
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: projetab
+      PGUSER: projetab
+      PGPASSWORD: projetab
+      BACKEND_PORT: 4001
+      NODE_ENV: production
+      PINECONE_API_KEY: ${PINECONE_API_KEY:-}
+      PINECONE_INDEX: ${PINECONE_INDEX:-}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:-}
+
+volumes:
+  pgdata:

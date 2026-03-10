@@ -15,7 +15,7 @@ import {
   Upload, FileText, Trash2, Loader2, CheckCircle2,
   AlertTriangle, Database, Github, FolderGit2, SkipForward,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -262,11 +262,9 @@ export function IngestionPanel() {
           metadata: Object.fromEntries(Object.entries(d.metadata).filter(([, v]) => v)),
         }));
 
-        const { data, error } = await supabase.functions.invoke("ingest-documents", {
-          body: { documents: payload, skipExisting: true },
+        const data = await api.post("/pinecone/ingest", {
+          documents: payload, skipExisting: true,
         });
-
-        if (error) throw error;
         if (data?.results) allResults.push(...data.results);
         setProg(Math.round(((i + batch.length) / ready.length) * 100));
       }

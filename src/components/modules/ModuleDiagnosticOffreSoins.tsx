@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
 interface Props {
@@ -30,13 +30,7 @@ export function ModuleDiagnosticOffreSoins({ finessGeo }: Props) {
   const { data: saeData, isLoading } = useQuery({
     queryKey: ["sae-etab", finessGeo],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("sae_capacites")
-        .select("*")
-        .eq("finess_geo", finessGeo!)
-        .order("annee", { ascending: false })
-        .limit(1);
-      if (error) throw error;
+      const data = await api.get<any[]>(`/sae/${finessGeo}`);
       return data?.[0] || null;
     },
     enabled: !!finessGeo,
@@ -46,13 +40,7 @@ export function ModuleDiagnosticOffreSoins({ finessGeo }: Props) {
   const { data: certifData } = useQuery({
     queryKey: ["certif-etab", finessGeo],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("certification_has")
-        .select("*")
-        .eq("finess_geo", finessGeo!)
-        .order("annee_visite", { ascending: false })
-        .limit(1);
-      if (error) throw error;
+      const data = await api.get<any[]>(`/certification/${finessGeo}`);
       return data?.[0] || null;
     },
     enabled: !!finessGeo,

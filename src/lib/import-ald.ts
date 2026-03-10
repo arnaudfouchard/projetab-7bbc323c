@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { logImportRun } from "@/lib/import-history";
 
 const BATCH = 200;
@@ -117,32 +117,24 @@ export async function importAldNational(
 
   onProgress?.(`${records.length} enregistrements à importer…`);
 
-  // Clear existing data first
-  await supabase.from("ald_national").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-
   let errors = 0;
-  for (let i = 0; i < records.length; i += BATCH) {
-    const batch = records.slice(i, i + BATCH);
-    const { error } = await supabase.from("ald_national").insert(batch as any);
-    if (error) {
-      console.error("ALD national batch error:", error.message);
-      errors++;
-    }
+  try {
+    await api.post("/bulk-replace", { table: "ald_national", rows: records });
+  } catch (err: any) {
+    console.error("ALD national bulk-replace error:", err.message);
+    errors++;
   }
 
   // Update data_sources
-  await supabase.from("data_sources").upsert(
-    {
-      id: "ald_national",
-      name: "ALD — Prévalence nationale",
-      record_count: records.length,
-      status: errors === 0 ? "ok" : "stale",
-      last_update: new Date().toISOString(),
-      format: "XLS",
-      source: "CNAM / data.gouv.fr",
-    } as any,
-    { onConflict: "id" }
-  );
+  await api.post("/data-sources/upsert", {
+    id: "ald_national",
+    name: "ALD — Prévalence nationale",
+    record_count: records.length,
+    status: errors === 0 ? "ok" : "stale",
+    last_update: new Date().toISOString(),
+    format: "XLS",
+    source: "CNAM / data.gouv.fr",
+  });
 
   await logImportRun({
     sourceId: "ald_national",
@@ -231,32 +223,24 @@ async function insertAldDept(
 ): Promise<{ imported: number; errors: number; headers: string[] }> {
   onProgress?.(`${records.length} enregistrements à importer…`);
 
-  // Clear existing data
-  await supabase.from("ald_departement").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-
   let errors = 0;
-  for (let i = 0; i < records.length; i += BATCH) {
-    const batch = records.slice(i, i + BATCH);
-    const { error } = await supabase.from("ald_departement").insert(batch as any);
-    if (error) {
-      console.error("ALD dept batch error:", error.message);
-      errors++;
-    }
+  try {
+    await api.post("/bulk-replace", { table: "ald_departement", rows: records });
+  } catch (err: any) {
+    console.error("ALD dept bulk-replace error:", err.message);
+    errors++;
   }
 
   // Update data_sources
-  await supabase.from("data_sources").upsert(
-    {
-      id: "ald",
-      name: "ALD — Prévalence par département",
-      record_count: records.length,
-      status: errors === 0 ? "ok" : "stale",
-      last_update: new Date().toISOString(),
-      format: "XLS",
-      source: "CNAM / data.gouv.fr",
-    } as any,
-    { onConflict: "id" }
-  );
+  await api.post("/data-sources/upsert", {
+    id: "ald",
+    name: "ALD — Prévalence par département",
+    record_count: records.length,
+    status: errors === 0 ? "ok" : "stale",
+    last_update: new Date().toISOString(),
+    format: "XLS",
+    source: "CNAM / data.gouv.fr",
+  });
 
   await logImportRun({
     sourceId: "ald",

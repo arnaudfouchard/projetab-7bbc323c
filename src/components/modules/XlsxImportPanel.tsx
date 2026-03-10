@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { Upload, Loader2, FileSpreadsheet, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -257,31 +257,28 @@ export function XlsxImportPanel({ onImportDone }: { onImportDone?: () => void })
       let errors = 0;
       for (let i = 0; i < mapped.length; i += BATCH) {
         const batch = mapped.slice(i, i + BATCH);
-        const { error } = await supabase
-          .from(selectedProfile.table as any)
-          .upsert(batch as any, {
-            onConflict: selectedProfile.conflictColumn || "id",
-            ignoreDuplicates: false,
+        try {
+          await api.post("/upsert", {
+            table: selectedProfile.table,
+            rows: batch,
+            conflictColumn: selectedProfile.conflictColumn || "id",
           });
-        if (error) {
+        } catch (error: any) {
           console.error(`Batch error:`, error.message);
           errors++;
         }
       }
 
       // Update data_sources
-      await supabase.from("data_sources").upsert(
-        {
-          id: selectedProfile.dataSourceId,
-          name: selectedProfile.label,
-          record_count: mapped.length,
-          status: errors === 0 ? "ok" : "stale",
-          last_update: new Date().toISOString(),
-          format: "XLSX",
-          source: "Upload manuel",
-        } as any,
-        { onConflict: "id" }
-      );
+      await api.post("/data-sources/upsert", {
+        id: selectedProfile.dataSourceId,
+        name: selectedProfile.label,
+        record_count: mapped.length,
+        status: errors === 0 ? "ok" : "stale",
+        last_update: new Date().toISOString(),
+        format: "XLSX",
+        source: "Upload manuel",
+      });
 
       setResult({ table: selectedProfile.table, count: mapped.length, errors });
       toast.success(`${mapped.length} enregistrements importés (${errors} erreurs)`);

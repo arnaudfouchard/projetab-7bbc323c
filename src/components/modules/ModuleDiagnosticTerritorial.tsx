@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, Home, Activity, MapPin } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
 interface Props {
@@ -30,16 +30,7 @@ export function ModuleDiagnosticTerritorial({ codeDepartement }: Props) {
   // Fetch real population data aggregated by department
   const { data: popData, isLoading } = useQuery({
     queryKey: ["pop-departement", codeDepartement],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("population_communes")
-        .select(
-          "population, population_0_14, population_15_29, population_30_44, population_45_59, population_60_74, population_75_plus, densite"
-        )
-        .eq("code_departement", codeDepartement!);
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => api.get(`/population/${codeDepartement}`),
     enabled: !!codeDepartement,
   });
 

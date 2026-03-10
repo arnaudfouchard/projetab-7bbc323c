@@ -15,7 +15,7 @@ import {
   Search, FileText, Loader2, Brain, Filter, X,
   ChevronDown, ChevronRight, Sparkles, BookOpen,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -93,16 +93,12 @@ export function ModuleRechercheDocumentaire(_props: { finessGeo?: string; codeDe
         if (v) activeFilters[k] = v;
       });
 
-      const { data, error } = await supabase.functions.invoke("pinecone-search", {
-        body: {
-          action: "search",
-          query: query.trim(),
-          filters: Object.keys(activeFilters).length > 0 ? activeFilters : undefined,
-          topK: 10,
-        },
+      const data = await api.post("/pinecone/search", {
+        action: "search",
+        query: query.trim(),
+        filters: Object.keys(activeFilters).length > 0 ? activeFilters : undefined,
+        topK: 10,
       });
-
-      if (error) throw error;
 
       const matches = data?.matches || [];
       setResults(matches);
@@ -127,17 +123,13 @@ export function ModuleRechercheDocumentaire(_props: { finessGeo?: string; codeDe
     setSynthesis(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("doc-synthesis", {
-        body: {
-          query: query.trim(),
-          results: results.slice(0, 5).map((r) => ({
-            score: r.score,
-            metadata: r.metadata,
-          })),
-        },
+      const data = await api.post("/doc-synthesis", {
+        query: query.trim(),
+        results: results.slice(0, 5).map((r) => ({
+          score: r.score,
+          metadata: r.metadata,
+        })),
       });
-
-      if (error) throw error;
       setSynthesis(data?.synthesis || "Pas de synthèse générée.");
     } catch (err: any) {
       console.error("Synthesis error:", err);

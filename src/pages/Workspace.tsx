@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/StatusBadge";
 import { MODULES } from "@/lib/constants";
 import type { ModuleId } from "@/lib/types";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
 import { ModuleDiagnosticTerritorial } from "@/components/modules/ModuleDiagnosticTerritorial";
@@ -47,15 +47,7 @@ export default function Workspace() {
   // Fetch project from DB
   const { data: project, isLoading: projectLoading } = useQuery({
     queryKey: ["project", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("id", id!)
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => api.get(`/projects/${id}`),
     enabled: !!id,
   });
 
@@ -63,15 +55,7 @@ export default function Workspace() {
   const finess = project?.finess;
   const { data: identity } = useQuery({
     queryKey: ["etablissement", finess],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("etablissements")
-        .select("*")
-        .eq("finess_geo", finess!)
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => api.get(`/etablissements/${finess}`),
     enabled: !!finess,
   });
 

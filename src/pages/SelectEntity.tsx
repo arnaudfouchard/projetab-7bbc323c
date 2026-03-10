@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ENTITY_TYPES, MODULES } from "@/lib/constants";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { EntityType, Etablissement } from "@/lib/types";
@@ -29,13 +29,8 @@ function useSearchEtablissements(query: string, entityType: EntityType | null) {
       if (!entityType || !query.trim() || query.trim().length < 2) return [];
 
       if (entityType === "ght") {
-        const { data, error } = await supabase
-          .from("ghts")
-          .select("ght_code, ght_nom, region, nb_membres")
-          .or(`ght_nom.ilike.%${query}%,ght_code.ilike.%${query}%,region.ilike.%${query}%`)
-          .limit(15);
-        if (error) throw error;
-        return (data || []).map((g) => ({
+        const data = await api.get<any[]>(`/ghts/search?q=${encodeURIComponent(query)}`);
+        return (data || []).map((g: any) => ({
           finess_geo: g.ght_code,
           nom: g.ght_nom,
           commune: `${g.nb_membres || 0} membres`,
@@ -45,18 +40,11 @@ function useSearchEtablissements(query: string, entityType: EntityType | null) {
         })) as Etablissement[];
       }
 
-      let req = supabase
-        .from("etablissements")
-        .select("finess_geo, finess_juridique, nom, type_etab, categorie_libelle, commune, departement, region, statut_juridique")
-        .or(`nom.ilike.%${query}%,finess_geo.ilike.%${query}%,commune.ilike.%${query}%,code_postal.ilike.%${query}%`);
-
-      for (const cat of EXCLUDED_CATEGORIES) {
-        req = req.neq("categorie_libelle", cat);
-      }
-
-      const { data, error } = await req.limit(15);
-      if (error) throw error;
-      return (data || []) as Etablissement[];
+      const exclude = encodeURIComponent(EXCLUDED_CATEGORIES.join(","));
+      const data = await api.get<Etablissement[]>(
+        `/etablissements/search?q=${encodeURIComponent(query)}&exclude=${exclude}`
+      );
+      return data || [];
     },
     enabled: !!entityType && query.trim().length >= 2,
     staleTime: 30_000,
@@ -91,9 +79,7 @@ export default function SelectEntity() {
       setCreating(true);
       try {
         const allModuleIds = MODULES.map((m) => m.id);
-        const { data, error } = await supabase
-          .from("projects")
-          .insert({
+        const data = await api.post<{ id: string }>("/projects", {
             name: projectName.trim(),
             entity_type: entityType || "etablissement",
             finess: selected.finess_geo,
@@ -103,10 +89,7 @@ export default function SelectEntity() {
             type: entityType === "ght" ? "GHT" : "Établissement",
             status: "draft",
             is_exploration: false,
-          })
-          .select("id")
-          .single();
-        if (error) throw error;
+          });
         navigate(`/projects/${data.id}`);
       } catch (err: any) {
         toast.error("Erreur lors de la création du projet : " + err.message);

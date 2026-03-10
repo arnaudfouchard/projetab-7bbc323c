@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 
 /**
  * Logs an import run in import_history for audit trail.
@@ -13,7 +13,7 @@ export async function logImportRun(params: {
   errors: number;
 }): Promise<void> {
   try {
-    await supabase.from("import_history").insert({
+    await api.post("/import-history", {
       source_id: params.sourceId,
       version_label: params.versionLabel,
       record_count: params.recordCount,
@@ -23,7 +23,7 @@ export async function logImportRun(params: {
       orphan_keys_detected: 0,
       status: params.errors === 0 ? "success" : "audit_warning",
       completed_at: new Date().toISOString(),
-    } as any);
+    });
   } catch (err) {
     console.error("Failed to log import history:", err);
   }

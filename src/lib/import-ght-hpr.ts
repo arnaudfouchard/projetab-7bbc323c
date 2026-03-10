@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { logImportRun } from "@/lib/import-history";
 
 const BATCH = 200;
@@ -87,19 +87,17 @@ export async function importGht(
   const records = Array.from(ghtMap.values());
   onProgress?.(`${records.length} GHT dédupliqués à importer…`);
 
-  await supabase.from("ghts").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-
   let errors = 0;
-  for (let i = 0; i < records.length; i += BATCH) {
-    const batch = records.slice(i, i + BATCH);
-    const { error } = await supabase.from("ghts").insert(batch as any);
-    if (error) { console.error("GHT batch error:", error.message); errors++; }
+  try {
+    await api.post("/bulk-replace", { table: "ghts", rows: records });
+  } catch (err: any) {
+    console.error("GHT bulk-replace error:", err.message);
+    errors++;
   }
 
-  await supabase.from("data_sources").upsert(
-    { id: "ght", name: "GHT", record_count: records.length, status: errors === 0 ? "ok" : "stale", last_update: new Date().toISOString(), format: "XLSX", source: "DGOS" } as any,
-    { onConflict: "id" }
-  );
+  await api.post("/data-sources/upsert", {
+    id: "ght", name: "GHT", record_count: records.length, status: errors === 0 ? "ok" : "stale", last_update: new Date().toISOString(), format: "XLSX", source: "DGOS",
+  });
 
   await logImportRun({
     sourceId: "ght",
@@ -135,26 +133,23 @@ export async function importHpr(
 
     const nom = nomCol ? String(row[nomCol]).trim() : null;
 
-    // Update existing etablissement to mark as HPR
-    const { error } = await supabase
-      .from("etablissements")
-      .update({ is_hopital_proximite: true } as any)
-      .eq("finess_geo", finess);
-
-    if (error) {
-      // If not found, try inserting
-      const { error: insertErr } = await supabase
-        .from("etablissements")
-        .upsert({ finess_geo: finess, nom: nom || "Inconnu", is_hopital_proximite: true } as any, { onConflict: "finess_geo" });
-      if (insertErr) { console.error("HPR error:", insertErr.message); errors++; }
+    // Upsert to mark as HPR
+    try {
+      await api.post("/upsert", {
+        table: "etablissements",
+        rows: [{ finess_geo: finess, nom: nom || "Inconnu", is_hopital_proximite: true }],
+        conflictColumn: "finess_geo",
+      });
+    } catch (err: any) {
+      console.error("HPR error:", err.message);
+      errors++;
     }
     updated++;
   }
 
-  await supabase.from("data_sources").upsert(
-    { id: "hpr", name: "Hôpitaux de proximité", description: "Liste des hôpitaux de proximité", record_count: updated, status: errors === 0 ? "ok" : "stale", last_update: new Date().toISOString(), format: "XLSX", source: "DGOS" } as any,
-    { onConflict: "id" }
-  );
+  await api.post("/data-sources/upsert", {
+    id: "hpr", name: "Hôpitaux de proximité", description: "Liste des hôpitaux de proximité", record_count: updated, status: errors === 0 ? "ok" : "stale", last_update: new Date().toISOString(), format: "XLSX", source: "DGOS",
+  });
 
   await logImportRun({
     sourceId: "hpr",

@@ -14,7 +14,7 @@ import {
 import { IngestionPanel } from "@/components/modules/IngestionPanel";
 import { XlsxImportPanel } from "@/components/modules/XlsxImportPanel";
 import { AuditPanel } from "@/components/modules/AuditPanel";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -62,14 +62,7 @@ export default function DataSources() {
 
   const { data: sources = [], isLoading, refetch } = useQuery({
     queryKey: ["data-sources"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("data_sources")
-        .select("*")
-        .order("name");
-      if (error) throw error;
-      return data as DataSource[];
-    },
+    queryFn: () => api.get<DataSource[]>("/data-sources"),
   });
 
   const runImport = async (sourceId: string) => {
@@ -103,10 +96,7 @@ export default function DataSources() {
     setImporting(sourceId);
     try {
       toast.info(`Import ${sourceId} lancé…`);
-      const { data, error } = await supabase.functions.invoke(funcName, {
-        body: {},
-      });
-      if (error) throw error;
+      const data = await api.post(`/import/${funcName}`, {});
       toast.success(`Import terminé : ${data?.imported ?? 0} enregistrements`);
       refetch();
     } catch (err: any) {
