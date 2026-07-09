@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+
+# Bun lockfiles (project uses npm)
+bun.lock
+bun.lockb
 
 # Editor directories and files
 .vscode/*

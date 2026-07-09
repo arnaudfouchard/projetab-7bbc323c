@@ -7,16 +7,22 @@ services:
       POSTGRES_USER: projetab
       POSTGRES_PASSWORD: projetab
     ports:
-      - "5433:5432"  # 5433 on host to avoid conflicts
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U projetab -d projetab"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   app:
     build: .
     restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "4001:4001"
     environment:
